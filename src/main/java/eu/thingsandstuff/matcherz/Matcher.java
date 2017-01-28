@@ -2,21 +2,30 @@ package eu.thingsandstuff.matcherz;
 
 import java.util.function.Predicate;
 
+@FunctionalInterface
 public interface Matcher<T> {
 
-    static <T> Matcher<T> of(Class<T> expectedClass) {
-        return of(expectedClass::isInstance);
+    static <T> Matcher<T> match(Class<T> expectedClass) {
+        return match(expectedClass, expectedClass::isInstance);
     }
 
-    static <T> Matcher<T> of(Predicate<T> predicate) {
-        return new BaseMatcher<T>(predicate);
+    static <T> Matcher<T> match(Class<T> targetClass, Predicate<T> predicate) {
+        return new BaseMatcher<T>(targetClass, predicate);
     }
 
     static <T> Matcher<T> any() {
-        return of((x) -> true);
+        return object -> true;
     }
 
-    Matcher<T> as(Capture<? super T> capture);
 
-    <S> Matcher<T> with(PropertyMatcher<? extends T, S> matcher);
+    default Matcher<T> as(Capture<? super T> capture) {
+        return this;
+    }
+
+    default <S> Matcher<T> with(PropertyMatcher<? extends T, S> matcher) {
+        return this;
+    }
+
+
+    boolean matches(Object object);
 }

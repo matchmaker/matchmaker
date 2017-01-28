@@ -13,6 +13,9 @@
 
 =============================
 
+    .noNulls() modifier for closure matchers being easier:
+        `match(Integer.class, x -> x > 0).noNulls()`
+
     HOW ABOUT RESOLVING NODES!?
     WHO HANDLES TRAVERSAL? THE MATCHER? THE MATCHER-RUNNING-PRATY?
     HOW DO THE MATCHERS MATCH GROUPS?
