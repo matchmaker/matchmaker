@@ -1,6 +1,4 @@
-1. make it compile
 2. make the basic tests pass
- - can match simple object
  - can match an object with a particular property
 3. make code complpetion work
 4.

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
-    Property<ProjectNode, PlanNode> source = $(ProjectNode::getSource);
+    Property<ProjectNode> source = $(ProjectNode::getSource);
 
     Capture<PlanNode> filter = Capture.make();
     Capture<ProjectNode> parent = Capture.make();
@@ -45,6 +45,13 @@ public class MatcherTest {
     }
 
     @Test
+    public void property_matchers() {
+        PropertyMatcher<String, Integer> lengthOne = $(String::length).matching(match(Integer.class, (x) -> x == 1));
+        assertMatch(match(String.class).with(lengthOne), "a");
+        assertNoMatch(match(String.class).with(lengthOne), "aa");
+    }
+
+    @Test
     public void match_object() {
         assertMatch(Project, new ProjectNode(null));
         assertNoMatch(Project, new FilterNode(null));
@@ -55,10 +62,13 @@ public class MatcherTest {
 
     @Test
     public void match_property() {
-//        Matcher<example.ast.ProjectNode> matcher = Project
-//                .with($(ProjectNode::getSource).matching(any()));
-//        assertMatch(matcher, new ProjectNode(null));
-//        assertNoMatch(matcher, new FilterNode(null));
+        Matcher<ProjectNode> matcher = Project
+                .with($(ProjectNode::getSource).matching(Filter));
+
+        assertMatch(matcher, new ProjectNode(new FilterNode(null)));
+        assertNoMatch(matcher, new FilterNode(null));
+        assertNoMatch(matcher, new ProjectNode(null));
+        assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
     }
 
     private <T> void assertMatch(Matcher<? extends T> matcher, T expectedMatch) {

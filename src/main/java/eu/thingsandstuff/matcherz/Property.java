@@ -2,17 +2,19 @@ package eu.thingsandstuff.matcherz;
 
 import java.util.function.Function;
 
-interface Property<T, S> {
+interface Property<T> {
 
-    static <T, S> Property<T, S> $(Function<T, S> f) {
-        return new Property<T, S>() {
+    static <T> Property<T> $(Function<T, ?> property) {
+        return new Property<T>() {
+            @SuppressWarnings("unchecked cast")
             @Override
-            public <S1> PropertyMatcher<T, S1> matching(Matcher<? super S1> matcher) {
-                return new PropertyMatcher<T, S1>() {
-                };
+            public <S> PropertyMatcher<T, S> matching(Matcher<?> matcher) {
+                Function<T, S> propertyCast = (Function<T, S>) property;
+                Matcher<S> matcherCast = (Matcher<S>) matcher;
+                return new PropertyMatcher<>(propertyCast, matcherCast);
             }
         };
     }
 
-    <S> PropertyMatcher<T, S> matching(Matcher<? super S> matcher);
+    <S> PropertyMatcher<T, S> matching(Matcher<? extends Object> matcher);
 }
