@@ -1,0 +1,83 @@
+1. make it compile
+2. make the basic tests pass
+ - can match simple object
+ - can match an object with a particular property
+3. make code complpetion work
+4.
+ - shortcut:
+    $(ProjectNode::getSource).matching(any()).as(capture)
+    $(ProjectNode::getSource).as(capture)
+
+
+
+
+=============================
+
+    HOW ABOUT RESOLVING NODES!?
+    WHO HANDLES TRAVERSAL? THE MATCHER? THE MATCHER-RUNNING-PRATY?
+    HOW DO THE MATCHERS MATCH GROUPS?
+    HOW DO THE MATCHERS ITERATE THROUGH GROUPS TO FIND MATCHES?
+
+
+    FIXME PropertyMatchers must be handed current captures! (do they?)
+
+    IDEAS / TODOS:
+     - MATCHING LIST/COLLECTION PROPERTIES
+
+     - name captures using private enums (it can be enforced that the parameter is of enum type)
+     - even better, use Capture<T> fieldName = newCapture() to allow typesafe capture result referencing
+     - separate general purpose matching (hasChild, anyTree, etc) from the AST hierarchy by a different type
+     - allow capturing multiple properties
+     - (?) match properties using 'dynamic' typing, have a match mode signaling errors
+     - an operator allowing for optional cast for matching purposes
+     - inject the evaluation strategy in order to execute the match? (a'la typeclasses)
+     - define a library of matchers and properties and import it statically in a rule superclass
+     - provide default captures for properties
+     - Property.$("string property name").available()
+
+     - shortcut:
+        $(ProjectNode::getSource).matching(any()).as(capture)
+        $(ProjectNode::getSource).as(capture)
+
+     CONCEPT CANDIDATES:
+     - BaseMatcher<T> - matches values/evidence of type T. has an Optional<Capture<? super T>>
+     - Captures - a typesafe heterogenous map, keyed using Capture<T>
+     - Capture<T> - a token used for naming matcher captures
+     - PropertyResolver?
+     - ResolutionStrategy?
+     - EvaluationStrategy?
+
+     - matcher reevaluation for new trees using memoization (caching)
+       - property matches thus have a special .having(propertyReference, matcher) syntax
+
+    match(Project.as(parent)
+        .having(Project::source, Filter.as(filter)
+            .having(Filter::condition, disjunction)))
+
+    match(Project.as(parent)
+        .having(transitiveSource, Filter.as(filter) //has resolutions handled for them, possibly is evaluated multiple times down the tree with subsequent resolutions
+            .having(Filter::condition, disjunction)))
+
+    //at least one leve below
+    match(Project.as(parent)
+        .having(source, ANY
+            .having(transitiveSource, Filter.as(filter)
+
+    match(Join.as(join)
+            .having(stupidCorrelations) //has to handle resolutions itself (?)
+            .having(Join::build, TableScan.as(left).having(someCompoundProperty.as(evidence))) //has resolutions handled for them
+            .having(Join::probe, Project.as(right))
+    )
+
+
+    match(Join.as(join)
+            .having(Join::build, ANY.as(left))
+            .having(Join::probe, sameAs(left)) //IDEALLY: sameAs covariant on matched nodes
+    )
+
+
+    withSource(child, Values).having(prunedInputs, prunableInputs)
+
+    match(ts, TableScan)
+        .having(name, property(TableScanNode::tableName, value) )
+        .having(name, property(TableScanNode::tableName, predicate) )
