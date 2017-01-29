@@ -1,23 +1,36 @@
-2. make the basic tests pass
- - can match an object with a particular property
-3. make code complpetion work
-4.
- - shortcut:
-    $(ProjectNode::getSource).matching(any()).as(capture)
-    $(ProjectNode::getSource).as(capture)
 
+CAPTURES and NPEs:
+    Fix NPEs when matching null values
+    Replace the Optional with Match, containing the matched value and captures
 
+Draft matching algorithm and think on its plugability
 
 
 =============================
 
+    TEST EACH COMBINATOR
+     -> for null input
+     -> for class mismatch non-match
+
+    3. make code complpetion work
+    4.
+     - shortcut:
+        $(ProjectNode::getSource).matching(any()).as(capture)
+        $(ProjectNode::getSource).as(capture)
+
+
     .noNulls() modifier for closure matchers being easier:
         `match(Integer.class, x -> x > 0).noNulls()`
+
+    massage types to elliminate casts in Property
 
     HOW ABOUT RESOLVING NODES!?
     WHO HANDLES TRAVERSAL? THE MATCHER? THE MATCHER-RUNNING-PRATY?
     HOW DO THE MATCHERS MATCH GROUPS?
     HOW DO THE MATCHERS ITERATE THROUGH GROUPS TO FIND MATCHES?
+
+     - matcher reevaluation for new trees using memoization (caching)
+       - property matches thus have a special .having(propertyReference, matcher) syntax
 
 
     FIXME PropertyMatchers must be handed current captures! (do they?)
@@ -25,41 +38,46 @@
     IDEAS / TODOS:
      - MATCHING LIST/COLLECTION PROPERTIES
 
-     - name captures using private enums (it can be enforced that the parameter is of enum type)
+     - OBSOLETE name captures using private enums (it can be enforced that the parameter is of enum type)
      - even better, use Capture<T> fieldName = newCapture() to allow typesafe capture result referencing
      - separate general purpose matching (hasChild, anyTree, etc) from the AST hierarchy by a different type
-     - allow capturing multiple properties
-     - (?) match properties using 'dynamic' typing, have a match mode signaling errors
+     - allow capturing multiple properties -> possible by returning a POJO as match result
      - an operator allowing for optional cast for matching purposes
      - inject the evaluation strategy in order to execute the match? (a'la typeclasses)
      - define a library of matchers and properties and import it statically in a rule superclass
-     - provide default captures for properties
-     - Property.$("string property name").available()
+     - LATER provide default captures for properties
+
+     - (?) match properties using 'dynamic' typing
+       - have a match mode signaling errors
+     - Property.$("string property name").available() for dynamic properties
 
      - shortcut:
         $(ProjectNode::getSource).matching(any()).as(capture)
         $(ProjectNode::getSource).as(capture)
 
+
+     Express co/contra-variance with casts in factory methods
+
      CONCEPT CANDIDATES:
-     - BaseMatcher<T> - matches values/evidence of type T. has an Optional<Capture<? super T>>
+     - Matcher<T> - matches values/evidence of type T. has an Optional<Capture<? super T>>
+     - Match<T> - the match result, containing the matched value of type T and the captures (?)
      - Captures - a typesafe heterogenous map, keyed using Capture<T>
      - Capture<T> - a token used for naming matcher captures
      - PropertyResolver?
      - ResolutionStrategy?
      - EvaluationStrategy?
 
-     - matcher reevaluation for new trees using memoization (caching)
-       - property matches thus have a special .having(propertyReference, matcher) syntax
-
     match(Project.as(parent)
         .having(Project::source, Filter.as(filter)
             .having(Filter::condition, disjunction)))
 
     match(Project.as(parent)
-        .having(transitiveSource, Filter.as(filter) //has resolutions handled for them, possibly is evaluated multiple times down the tree with subsequent resolutions
-            .having(Filter::condition, disjunction)))
+        .having(TRANSITIVE_SOURCE.matching(Filter.as(filter)) //has resolutions handled for them, possibly is evaluated multiple times down the tree with subsequent resolutions
+            .having($(FilterNode.class, Filter::condition).matching(disjunction))))
 
-    //at least one leve below
+    (!) This means the PropertyMatcher must drive the match a bit
+
+    //at least one level below
     match(Project.as(parent)
         .having(source, ANY
             .having(transitiveSource, Filter.as(filter)
@@ -81,4 +99,7 @@
 
     match(ts, TableScan)
         .having(name, property(TableScanNode::tableName, value) )
-        .having(name, property(TableScanNode::tableName, predicate) )
+        .having(name, property(TableScanNode::tableName, extractor) )
+
+DONE Make the matchers extractors (allow extracting arbitrary values)
+DONE Use invariant types everywhere for now.
