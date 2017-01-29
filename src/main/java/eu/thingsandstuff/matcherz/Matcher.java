@@ -1,10 +1,14 @@
 package eu.thingsandstuff.matcherz;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 
 public class Matcher<T> {
 
@@ -17,26 +21,27 @@ public class Matcher<T> {
     }
 
     static <T> Matcher<T> match(Class<T> targetClass, Predicate<T> predicate) {
-        return match(Extractor.assuming(targetClass, (x) -> Optional.of(x).filter(predicate)));
+        return match(Extractor.assuming(targetClass, (x) -> Match.of(x).filter(predicate)));
     }
 
     /**
      * For cases when evaluating a property is needed to check
      * if it's possible to construct an object and that object's
      * construction largely repeats checking the property.
-     *
+     * <p>
      * E.g. let's say we have a set and we'd like to match
      * other sets having a non-empty intersection with it.
      * If the intersection is not empty, we'd like to use it
      * in further computations. Extractors allow for exactly that.
-     *
+     * <p>
      * An adequate extractor for the example above would compute
-     * the intersection and return it wrapped in an Optional.
+     * the intersection and return it wrapped in a Match
+     * (think: null-capable Optional with a field for storing captures).
      * If the intersection would be empty, the extractor should
-     * would a non-match by returning Optional.empty().
+     * would a non-match by returning Match.empty().
      *
      * @param extractor
-     * @param <T> type of the extracted value
+     * @param <T>       type of the extracted value
      * @return
      */
     static <T> Matcher<T> match(Extractor<T> extractor) {
@@ -65,12 +70,35 @@ public class Matcher<T> {
         return new Matcher<>(extractor, Util.append(propertyMatchers, matcher), capture);
     }
 
-    public Optional<T> match(Object object) {
-        Predicate<T> propertiesMatch = (matchedValue) -> propertyMatchers.stream().allMatch(pm -> {
-            Object propertyValue = pm.getProperty().apply(matchedValue);
-            return pm.getMatcher().match(propertyValue).isPresent();
-        });
-        return extractor.apply(object).filter(propertiesMatch);
+    public Match<T> match(Object object) {
+        Match<T> match = addCapture(extractor.apply(object));
+        return match
+                .map(matchedValue -> propertyMatchers.stream().collect(toMap(identity(), pm -> {
+                    Object propertyValue = pm.getProperty().apply(matchedValue);
+                    return pm.getMatcher().match(propertyValue);
+                })))
+                .filter(propertyMatches -> propertyMatches.values().stream().allMatch(Match::isPresent))
+                .flatMap(propertyMatches -> addAll(match, nestedCapures(propertyMatches)));
+
+    }
+
+    private Match<T> addAll(Match<T> match, Stream<Map.Entry<Capture<?>, Object>> captures) {
+        Iterator<Map.Entry<Capture<?>, Object>> iterator = captures.iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Capture<?>, Object> capture = iterator.next();
+            match = match.withCapture(capture.getKey(), capture.getValue());
+        }
+        return match;
+    }
+
+    private Stream<Map.Entry<Capture<?>, Object>> nestedCapures(Map<PropertyMatcher<T, ?>, ? extends Match<?>> propertyMatches) {
+        return propertyMatches.values().stream().flatMap(
+                pm -> pm.captures().entrySet().stream()
+        );
+    }
+
+    private Match<T> addCapture(Match<T> match) {
+        return match.isPresent() && capture != null ? match.withCapture(capture, match.value()) : match;
     }
 
 }

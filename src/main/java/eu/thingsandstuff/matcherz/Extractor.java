@@ -1,13 +1,12 @@
 package eu.thingsandstuff.matcherz;
 
-import java.util.Optional;
 import java.util.function.Function;
 
-public interface Extractor<T> extends Function<Object, Optional<T>> {
+public interface Extractor<T> extends Function<Object, Match<T>> {
 
-    static <T, S> Extractor<S> assuming(Class<T> targetClass, Function<T, Optional<S>> predicate) {
+    static <T, S> Extractor<S> assuming(Class<T> targetClass, Function<T, Match<S>> extractor) {
         return (x) -> targetClass.isInstance(x) ?
-                predicate.apply(targetClass.cast(x)) :
-                Optional.empty();
+                extractor.apply(targetClass.cast(x)) :
+                Match.empty();
     }
 }

@@ -1,40 +1,32 @@
 package eu.thingsandstuff.matcherz;
 
-import example.ast.Expression;
 import example.ast.FilterNode;
-import example.ast.PlanNode;
 import example.ast.ProjectNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
-import static eu.thingsandstuff.matcherz.Matcher.*;
+import static eu.thingsandstuff.matcherz.Capture.newCapture;
+import static eu.thingsandstuff.matcherz.Matcher.any;
+import static eu.thingsandstuff.matcherz.Matcher.match;
 import static eu.thingsandstuff.matcherz.Property.$;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
+    Matcher<ProjectNode> Project = match(ProjectNode.class);
     Property<ProjectNode> source = $(ProjectNode::getSource);
 
-    Capture<PlanNode> filter = Capture.make();
-    Capture<ProjectNode> parent = Capture.make();
-    Matcher<Expression> disjunction = match(Expression.class);
-    Matcher<ProjectNode> Project = match(ProjectNode.class);
     Matcher<FilterNode> Filter = match(FilterNode.class);
 
-//    Matcher<ProjectNode> matcher = Project.as(parent)
-//            .with(source.matching(Filter.as(filter)));
-//                    .with($(FilterNode::getPredicate).matching(disjunction))));
-
     @Test
-    public void trivial_matchers() {
+    void trivial_matchers() {
         //any
-        //assertMatch(any(), null); //FIXME
         assertMatch(any(), 42);
         assertMatch(any(), "John Doe");
 
@@ -49,33 +41,82 @@ public class MatcherTest {
     }
 
     @Test
-    public void match_object() {
+    void match_object() {
         assertMatch(Project, new ProjectNode(null));
         assertNoMatch(Project, new FilterNode(null));
     }
 
     @Test
-    public void property_matchers() {
+    void property_matchers() {
         PropertyMatcher<String, Integer> lengthOne = $(String::length).matching(match(Integer.class, (x) -> x == 1));
         assertMatch(match(String.class).with(lengthOne), "a");
         assertNoMatch(match(String.class).with(lengthOne), "aa");
     }
 
     @Test
-    public void evidence_backed_matching_using_extractors() {
+    void capturing_matches_in_a_typesafe_manner() {
+        Capture<ProjectNode> root = newCapture();
+        Capture<ProjectNode> child = newCapture();
+        Capture<FilterNode> filter = newCapture();
+
+        Matcher<ProjectNode> matcher =
+                Project.as(root)
+                        .with(source.matching(Project.as(child)
+                                .with(source.matching(Filter.as(filter)))));
+
+        ProjectNode tree = new ProjectNode(new ProjectNode(new FilterNode(null)));
+
+        Match<ProjectNode> match = assertMatch(matcher, tree);
+        ProjectNode capturedRoot = match.capture(root);
+        assertEquals(tree, capturedRoot);
+        assertEquals(tree.getSource(), match.capture(child));
+        assertEquals(((ProjectNode) tree.getSource()).getSource(), match.capture(filter));
+    }
+
+    @Test
+    void evidence_backed_matching_using_extractors() {
         Extractor<List<String>> stringWithVowels = Extractor.assuming(String.class, (x) -> {
             Stream<String> characters = x.chars().mapToObj(c -> String.valueOf((char) c));
             List<String> vowels = characters.filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
-            return Optional.of(vowels).filter(l -> !l.isEmpty());
+            return Match.of(vowels).filter(l -> !l.isEmpty());
         });
+        Matcher<List<String>> matcher = match(stringWithVowels);
 
-        assertMatch(match(stringWithVowels), "John Doe", asList("o", "o", "e"));
-        assertNoMatch(match(stringWithVowels), "pqrst");
+        Capture<List<String>> vowels = newCapture();
+        List<String> expectedVowels = asList("o", "o", "e");
+
+        Match<List<String>> match = assertMatch(matcher.as(vowels), "John Doe", expectedVowels);
+        assertEquals(expectedVowels, match.capture(vowels));
+
+        assertNoMatch(matcher, "pqrst");
     }
 
+    @Test
+    void no_match_means_no_captures() {
+        Capture<Void> impossible = newCapture();
+        Matcher<Void> matcher = match(Void.class).as(impossible);
+
+        Match<Void> match = matcher.match(42);
+
+        assertTrue(match.isEmpty());
+        Throwable throwable = assertThrows(NoSuchElementException.class, () -> match.capture(impossible));
+        assertTrue(() -> throwable.getMessage().contains("empty match"));
+    }
 
     @Test
-    public void match_property() {
+    void unknown_capture_is_an_error() {
+        Matcher<?> matcher = any();
+        Capture<?> unknownCapture = newCapture();
+
+        Match<?> match = matcher.match(42);
+
+        Throwable throwable = assertThrows(IllegalArgumentException.class, () -> match.capture(unknownCapture));
+        assertTrue(() -> throwable.getMessage().contains("This capture is unknown to this matcher"));
+        //TODO make the error message somewhat help which capture was used, when the captures are human-discernable.
+    }
+
+    @Test
+    void match_property() {
         Matcher<ProjectNode> matcher = Project
                 .with($(ProjectNode::getSource).matching(Filter));
 
@@ -85,17 +126,28 @@ public class MatcherTest {
         assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
     }
 
-    private <T> void assertMatch(Matcher<T> matcher, T expectedMatch) {
-        assertMatch(matcher, expectedMatch, expectedMatch);
+    @Test
+    void null_not_matched_by_default() {
+        assertNoMatch(any(), null);
+        assertNoMatch(match(Integer.class), null);
+
+        //nulls can be matched using a custom extractor for now
+        Extractor<Object> nullAcceptingExtractor = (x) -> Match.of(x);
+        assertMatch(match(nullAcceptingExtractor), null);
     }
 
-    private <T, R> void assertMatch(Matcher<R> matcher, T matchedAgainst, R expectedMatch) {
-        Optional<R> match = matcher.match(matchedAgainst);
-        assertEquals(Optional.of(expectedMatch), match);
+    private <T> Match<T> assertMatch(Matcher<T> matcher, T expectedMatch) {
+        return assertMatch(matcher, expectedMatch, expectedMatch);
+    }
+
+    private <T, R> Match<R> assertMatch(Matcher<R> matcher, T matchedAgainst, R expectedMatch) {
+        Match<R> match = matcher.match(matchedAgainst);
+        assertEquals(expectedMatch, match.value());
+        return match;
     }
 
     private <T> void assertNoMatch(Matcher<T> matcher, Object expectedNoMatch) {
-        Optional<T> match = matcher.match(expectedNoMatch);
-        assertEquals(Optional.empty(), match);
+        Match<T> match = matcher.match(expectedNoMatch);
+        assertEquals(Match.empty(), match);
     }
 }
