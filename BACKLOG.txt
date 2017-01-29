@@ -1,24 +1,15 @@
 
 Draft matching algorithm and think on its plugability
 
-Allow two DSL variants if it comes to static methods? With the '$'?
+Try to plug that into presto
 
 
 =============================
 
-    FIXME make the Match returned by matcher different from a MatchResult, containing captures as well
-        we'd like capture handling to be done by the framework, after all - and Match is produced by the user's code
-
     Try and see what happens to the code if we make Capture carry the captured value as well
 
-    For now, `assuming` funcitons and - more importantly - class-based matchers do not match nulls.
-    This also means any matcher constructing the `assuming` function won't ever get a null value to match against
-    (which seems a sane default)
-    This can be changed in future, at least in two ways:
-     - add an .orNull() method to Matcher
-     - make the `assuming` combinator pass-through nulls. If that happens, property matchers will have to start
-       handling part of the resolution, or we'd have to use two `assuming` variants (null/non-null)...
-    The more I think of it, the more I believe `.orNull()` is the only sensible change in this area.
+    FIXME make the Match returned by matcher different from a MatchResult, containing captures as well
+        we'd like capture handling to be done by the framework, after all - and Match is produced by the user's code
 
     Optional matches, optional captures
 
@@ -30,17 +21,15 @@ Allow two DSL variants if it comes to static methods? With the '$'?
      -> for null input
      -> for class mismatch non-match
 
-    3. make code complpetion work
-    4.
-     - shortcut:
+    take code completion for a drive, make it work seamlessly
+
+    ? - shortcut:
         $(ProjectNode::getSource).matching(any()).as(capture)
         $(ProjectNode::getSource).as(capture)
 
+    massage types to eliminate casts in Property
 
-    .noNulls() modifier for closure matchers being easier:
-        `match(Integer.class, x -> x > 0).noNulls()`
-
-    massage types to elliminate casts in Property
+    MAGICALLY GENERATE VALUES BASED ON MATCHERS
 
     HOW ABOUT RESOLVING NODES!?
     WHO HANDLES TRAVERSAL? THE MATCHER? THE MATCHER-RUNNING-PRATY?
@@ -50,17 +39,13 @@ Allow two DSL variants if it comes to static methods? With the '$'?
      - matcher reevaluation for new trees using memoization (caching)
        - property matches thus have a special .having(propertyReference, matcher) syntax
 
-
-    FIXME PropertyMatchers must be handed current captures! (do they?)
+    RECURSIVE MATCHERS
+     - using a special capture?
 
     IDEAS / TODOS:
      - MATCHING LIST/COLLECTION PROPERTIES
+        - add POC tests, create basic combinators
 
-     - OBSOLETE name captures using private enums (it can be enforced that the parameter is of enum type)
-     - even better, use Capture<T> fieldName = newCapture() to allow typesafe capture result referencing
-     - separate general purpose matching (hasChild, anyTree, etc) from the AST hierarchy by a different type
-     - allow capturing multiple properties -> possible by returning a POJO as match result
-     - an operator allowing for optional cast for matching purposes
      - inject the evaluation strategy in order to execute the match? (a'la typeclasses)
      - define a library of matchers and properties and import it statically in a rule superclass
      - LATER provide default captures for properties
@@ -72,7 +57,6 @@ Allow two DSL variants if it comes to static methods? With the '$'?
      - shortcut:
         $(ProjectNode::getSource).matching(any()).as(capture)
         $(ProjectNode::getSource).as(capture)
-
 
      Express co/contra-variance with casts in factory methods
 
@@ -89,15 +73,13 @@ Allow two DSL variants if it comes to static methods? With the '$'?
      - toStrings
      - sensible scopes in debugger
 
-
-
     match(Project.as(parent)
         .having(Project::source, Filter.as(filter)
             .having(Filter::condition, disjunction)))
 
     match(Project.as(parent)
         .having(TRANSITIVE_SOURCE.matching(Filter.as(filter)) //has resolutions handled for them, possibly is evaluated multiple times down the tree with subsequent resolutions
-            .having($(FilterNode.class, Filter::condition).matching(disjunction))))
+            .having($(FilterNode.class, FilterNode::condition).matching(disjunction))))
 
     (!) This means the PropertyMatcher must drive the match a bit
 
@@ -125,5 +107,31 @@ Allow two DSL variants if it comes to static methods? With the '$'?
         .having(name, property(TableScanNode::tableName, value) )
         .having(name, property(TableScanNode::tableName, extractor) )
 
+    For now, `assuming` funcitons and - more importantly - class-based matchers do not match nulls.
+    This also means any matcher constructing the `assuming` function won't ever get a null value to match against
+    (which seems a sane default)
+    This can be changed in future, at least in two ways:
+     - add an .orNull() method to Matcher
+     - make the `assuming` combinator pass-through nulls. If that happens, property matchers will have to start
+       handling part of the resolution, or we'd have to use two `assuming` variants (null/non-null)...
+    The more I think of it, the more I believe `.orNull()` is the only sensible change in this area.
+
+
+
+
+DONE separate general purpose matching (hasChild, anyTree, etc) from the AST hierarchy by a different type
+DONE allow capturing multiple properties -> possible by returning a POJO as match result
+OBSOLETE - all the matchers match Object (even if there's sugar to narrow the type)
+    an operator allowing for optional cast for matching purposes
+
+NAH... Allow two DSL variants if it comes to static methods? With the '$'?
+
+NAH - no nulls are the default, at least now
+        .noNulls() modifier for closure matchers being easier:
+        `match(Integer.class, x -> x > 0).noNulls()`
+
 DONE Make the matchers extractors (allow extracting arbitrary values)
 DONE Use invariant types everywhere for now.
+
+OBSOLETE name captures using private enums (it can be enforced that the parameter is of enum type)
+DONE even better, use Capture<T> fieldName = newCapture() to allow typesafe capture result referencing
