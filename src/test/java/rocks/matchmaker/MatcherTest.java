@@ -73,8 +73,8 @@ public class MatcherTest {
         Capture<FilterNode> filter = newCapture();
 
         Matcher<ProjectNode> matcher = Project
-                .with(source.matching(Project.as(child)
-                        .with(source.matching(Filter.as(filter)))));
+                .with(source.matching(Project.capturedAs(child)
+                        .with(source.matching(Filter.capturedAs(filter)))));
 
         ProjectNode tree = new ProjectNode(new ProjectNode(new FilterNode(null)));
 
@@ -95,7 +95,7 @@ public class MatcherTest {
 
         Capture<List<String>> vowels = newCapture();
 
-        Match<List<String>> match = assertMatch(stringWithVowels.as(vowels), "John Doe", asList("o", "o", "e"));
+        Match<List<String>> match = assertMatch(stringWithVowels.capturedAs(vowels), "John Doe", asList("o", "o", "e"));
         assertEquals(match.value(), match.capture(vowels));
 
         assertNoMatch(stringWithVowels, "pqrst");
@@ -104,7 +104,7 @@ public class MatcherTest {
     @Test
     void no_match_means_no_captures() {
         Capture<Void> impossible = newCapture();
-        Matcher<Void> matcher = match(Void.class).as(impossible);
+        Matcher<Void> matcher = match(Void.class).capturedAs(impossible);
 
         Match<Void> match = matcher.match(42);
 

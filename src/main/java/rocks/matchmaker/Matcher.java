@@ -58,7 +58,7 @@ public class Matcher<T> {
         this.capture = capture;
     }
 
-    public Matcher<T> as(Capture<T> capture) {
+    public Matcher<T> capturedAs(Capture<T> capture) {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
