@@ -8,15 +8,16 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
-import static rocks.matchmaker.Capture.newCapture;
-import static rocks.matchmaker.Matcher.any;
-import static rocks.matchmaker.Matcher.match;
-import static rocks.matchmaker.Property.$;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static rocks.matchmaker.Capture.newCapture;
+import static rocks.matchmaker.Extractor.assuming;
+import static rocks.matchmaker.Matcher.any;
+import static rocks.matchmaker.Matcher.match;
+import static rocks.matchmaker.Property.$;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
@@ -56,41 +57,48 @@ public class MatcherTest {
     }
 
     @Test
+    void match_nested_properties() {
+        Matcher<ProjectNode> matcher = Project
+                .with($(ProjectNode::getSource).matching(Filter));
+
+        assertMatch(matcher, new ProjectNode(new FilterNode(null)));
+        assertNoMatch(matcher, new FilterNode(null));
+        assertNoMatch(matcher, new ProjectNode(null));
+        assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
+    }
+
+    @Test
     void capturing_matches_in_a_typesafe_manner() {
-        Capture<ProjectNode> root = newCapture();
         Capture<ProjectNode> child = newCapture();
         Capture<FilterNode> filter = newCapture();
 
-        Matcher<ProjectNode> matcher =
-                Project.as(root)
-                        .with(source.matching(Project.as(child)
-                                .with(source.matching(Filter.as(filter)))));
+        Matcher<ProjectNode> matcher = Project
+                .with(source.matching(Project.as(child)
+                        .with(source.matching(Filter.as(filter)))));
 
         ProjectNode tree = new ProjectNode(new ProjectNode(new FilterNode(null)));
 
         Match<ProjectNode> match = assertMatch(matcher, tree);
-        ProjectNode capturedRoot = match.capture(root);
-        assertEquals(tree, capturedRoot);
-        assertEquals(tree.getSource(), match.capture(child));
+        //notice the concrete type despite no casts:
+        ProjectNode capturedChild = match.capture(child);
+        assertEquals(tree.getSource(), capturedChild);
         assertEquals(((ProjectNode) tree.getSource()).getSource(), match.capture(filter));
     }
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Extractor<List<String>> stringWithVowels = Extractor.assuming(String.class, (x) -> {
+        Matcher<List<String>> stringWithVowels = match(assuming(String.class, (x) -> {
             Stream<String> characters = x.chars().mapToObj(c -> String.valueOf((char) c));
             List<String> vowels = characters.filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Match.of(vowels).filter(l -> !l.isEmpty());
-        });
-        Matcher<List<String>> matcher = match(stringWithVowels);
+        }));
 
         Capture<List<String>> vowels = newCapture();
-        List<String> expectedVowels = asList("o", "o", "e");
 
-        Match<List<String>> match = assertMatch(matcher.as(vowels), "John Doe", expectedVowels);
-        assertEquals(expectedVowels, match.capture(vowels));
+        Match<List<String>> match = assertMatch(stringWithVowels.as(vowels), "John Doe", asList("o", "o", "e"));
+        assertEquals(match.value(), match.capture(vowels));
 
-        assertNoMatch(matcher, "pqrst");
+        assertNoMatch(stringWithVowels, "pqrst");
     }
 
     @Test
@@ -115,17 +123,6 @@ public class MatcherTest {
         Throwable throwable = assertThrows(IllegalArgumentException.class, () -> match.capture(unknownCapture));
         assertTrue(() -> throwable.getMessage().contains("This capture is unknown to this matcher"));
         //TODO make the error message somewhat help which capture was used, when the captures are human-discernable.
-    }
-
-    @Test
-    void match_property() {
-        Matcher<ProjectNode> matcher = Project
-                .with($(ProjectNode::getSource).matching(Filter));
-
-        assertMatch(matcher, new ProjectNode(new FilterNode(null)));
-        assertNoMatch(matcher, new FilterNode(null));
-        assertNoMatch(matcher, new ProjectNode(null));
-        assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
     }
 
     @Test
