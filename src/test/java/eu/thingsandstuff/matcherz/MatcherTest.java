@@ -14,7 +14,9 @@ import static eu.thingsandstuff.matcherz.Matcher.match;
 import static eu.thingsandstuff.matcherz.Property.$;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {

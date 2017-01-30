@@ -1,13 +1,15 @@
 package eu.thingsandstuff.matcherz;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableMap;
 
-abstract class Match<T> {
+public abstract class Match<T> {
 
     public abstract boolean isPresent();
 
@@ -39,7 +41,7 @@ abstract class Match<T> {
 
     public abstract <U> Match<U> flatMap(Function<? super T, Match<U>> mapper);
 
-    public abstract <S> S capture(Capture<S> vowels);
+    public abstract <S> S capture(Capture<S> capture);
 
     protected abstract Map<Capture<?>, Object> captures();
 
@@ -160,7 +162,7 @@ abstract class Match<T> {
         }
 
         @Override
-        public <S> S capture(Capture<S> vowels) {
+        public <S> S capture(Capture<S> capture) {
             throw new NoSuchElementException("Captures are undefined for an empty match");
         }
 

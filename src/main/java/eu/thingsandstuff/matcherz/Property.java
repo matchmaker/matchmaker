@@ -2,7 +2,7 @@ package eu.thingsandstuff.matcherz;
 
 import java.util.function.Function;
 
-interface Property<T> {
+public interface Property<T> {
 
     static <T> Property<T> $(Function<T, ?> property) {
         return new Property<T>() {

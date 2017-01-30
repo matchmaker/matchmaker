@@ -12,15 +12,15 @@ import static java.util.stream.Collectors.toMap;
 
 public class Matcher<T> {
 
-    static Matcher<Object> any() {
+    public static Matcher<Object> any() {
         return match(Object.class);
     }
 
-    static <T> Matcher<T> match(Class<T> expectedClass) {
+    public static <T> Matcher<T> match(Class<T> expectedClass) {
         return match(expectedClass, (x) -> true);
     }
 
-    static <T> Matcher<T> match(Class<T> targetClass, Predicate<T> predicate) {
+    public static <T> Matcher<T> match(Class<T> targetClass, Predicate<T> predicate) {
         return match(Extractor.assuming(targetClass, (x) -> Match.of(x).filter(predicate)));
     }
 
@@ -44,7 +44,7 @@ public class Matcher<T> {
      * @param <T>       type of the extracted value
      * @return
      */
-    static <T> Matcher<T> match(Extractor<T> extractor) {
+    public static <T> Matcher<T> match(Extractor<T> extractor) {
         return new Matcher<>(extractor, emptyList(), null);
     }
 
