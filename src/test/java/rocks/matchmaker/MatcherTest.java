@@ -1,4 +1,4 @@
-package eu.thingsandstuff.matcherz;
+package rocks.matchmaker;
 
 import example.ast.FilterNode;
 import example.ast.ProjectNode;
@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
-import static eu.thingsandstuff.matcherz.Capture.newCapture;
-import static eu.thingsandstuff.matcherz.Matcher.any;
-import static eu.thingsandstuff.matcherz.Matcher.match;
-import static eu.thingsandstuff.matcherz.Property.$;
+import static rocks.matchmaker.Capture.newCapture;
+import static rocks.matchmaker.Matcher.any;
+import static rocks.matchmaker.Matcher.match;
+import static rocks.matchmaker.Property.$;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;

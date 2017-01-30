@@ -1,4 +1,4 @@
-package eu.thingsandstuff.matcherz;
+package rocks.matchmaker;
 
 public class Capture<T> {
 

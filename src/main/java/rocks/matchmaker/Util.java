@@ -1,4 +1,4 @@
-package eu.thingsandstuff.matcherz;
+package rocks.matchmaker;
 
 import java.util.ArrayList;
 import java.util.Collections;
