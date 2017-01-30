@@ -17,13 +17,13 @@ import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.Extractor.assuming;
 import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.match;
-import static rocks.matchmaker.Property.$;
+import static rocks.matchmaker.Property.property;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
     Matcher<ProjectNode> Project = match(ProjectNode.class);
-    Property<ProjectNode> source = $(ProjectNode::getSource);
+    Property<ProjectNode> source = property(ProjectNode::getSource);
 
     Matcher<FilterNode> Filter = match(FilterNode.class);
 
@@ -51,7 +51,7 @@ public class MatcherTest {
 
     @Test
     void property_matchers() {
-        PropertyMatcher<String, Integer> lengthOne = $(String::length).matching(match(Integer.class, (x) -> x == 1));
+        PropertyMatcher<String, Integer> lengthOne = property(String::length).matching(match(Integer.class, (x) -> x == 1));
         assertMatch(match(String.class).with(lengthOne), "a");
         assertNoMatch(match(String.class).with(lengthOne), "aa");
     }
@@ -59,7 +59,7 @@ public class MatcherTest {
     @Test
     void match_nested_properties() {
         Matcher<ProjectNode> matcher = Project
-                .with($(ProjectNode::getSource).matching(Filter));
+                .with(property(ProjectNode::getSource).matching(Filter));
 
         assertMatch(matcher, new ProjectNode(new FilterNode(null)));
         assertNoMatch(matcher, new FilterNode(null));

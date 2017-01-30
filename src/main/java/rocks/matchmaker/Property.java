@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 public interface Property<T> {
 
-    static <T> Property<T> $(Function<T, ?> property) {
+    static <T> Property<T> property(Function<T, ?> property) {
         return new Property<T>() {
             @SuppressWarnings("unchecked cast")
             @Override
