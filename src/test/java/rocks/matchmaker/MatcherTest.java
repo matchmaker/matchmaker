@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
-import static rocks.matchmaker.Extractor.assuming;
+import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.match;
 import static rocks.matchmaker.Property.property;
@@ -87,7 +87,7 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = match(assuming(String.class, (x) -> {
+        Matcher<List<String>> stringWithVowels = match(assumingType(String.class, (x) -> {
             Stream<String> characters = x.chars().mapToObj(c -> String.valueOf((char) c));
             List<String> vowels = characters.filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Match.of(vowels).filter(l -> !l.isEmpty());

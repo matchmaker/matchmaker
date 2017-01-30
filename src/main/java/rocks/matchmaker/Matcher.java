@@ -21,7 +21,7 @@ public class Matcher<T> {
     }
 
     public static <T> Matcher<T> match(Class<T> targetClass, Predicate<T> predicate) {
-        return match(Extractor.assuming(targetClass, (x) -> Match.of(x).filter(predicate)));
+        return match(Extractor.assumingType(targetClass, (x) -> Match.of(x).filter(predicate)));
     }
 
     /**
