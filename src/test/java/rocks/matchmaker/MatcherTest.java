@@ -90,7 +90,7 @@ public class MatcherTest {
         Matcher<List<String>> stringWithVowels = match(assumingType(String.class, (x) -> {
             Stream<String> characters = x.chars().mapToObj(c -> String.valueOf((char) c));
             List<String> vowels = characters.filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
-            return Match.of(vowels).filter(l -> !l.isEmpty());
+            return Option.of(vowels).filter(l -> !l.isEmpty());
         }));
 
         Capture<List<String>> vowels = newCapture();
@@ -110,7 +110,7 @@ public class MatcherTest {
 
         assertTrue(match.isEmpty());
         Throwable throwable = assertThrows(NoSuchElementException.class, () -> match.capture(impossible));
-        assertTrue(() -> throwable.getMessage().contains("empty match"));
+        assertTrue(() -> throwable.getMessage().contains("Empty match contains no value"));
     }
 
     @Test
@@ -120,8 +120,8 @@ public class MatcherTest {
 
         Match<?> match = matcher.match(42);
 
-        Throwable throwable = assertThrows(IllegalArgumentException.class, () -> match.capture(unknownCapture));
-        assertTrue(() -> throwable.getMessage().contains("This capture is unknown to this matcher"));
+        Throwable throwable = assertThrows(NoSuchElementException.class, () -> match.capture(unknownCapture));
+        assertTrue(() -> throwable.getMessage().contains("unknown Capture"));
         //TODO make the error message somewhat help which capture was used, when the captures are human-discernable.
     }
 
@@ -131,7 +131,7 @@ public class MatcherTest {
         assertNoMatch(match(Integer.class), null);
 
         //nulls can be matched using a custom extractor for now
-        Extractor<Object> nullAcceptingExtractor = (x) -> Match.of(x);
+        Extractor<Object> nullAcceptingExtractor = (x) -> Option.of(x);
         assertMatch(match(nullAcceptingExtractor), null);
     }
 

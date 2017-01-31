@@ -1,4 +1,7 @@
 
+Implement the Matcher.that(Matcher) / havingTrait(Matcher) / *** matching(Matcher) *** combinator
+    Add an overload for Matcher.that((T) -> )
+
 Draft matching algorithm and think on its plugability
 
 Try to plug that into presto
@@ -6,8 +9,11 @@ Try to plug that into presto
 
 =============================
 
-    Try and see what happens to the code if we make Capture carry the captured value as well
+    matching multiple patterns in one pass
 
+    not(Matcher): Matcher<Boolean>
+
+    Verify if static interface methods are as intended (can be invoked on containing interface only)
     FIXME make the Match returned by matcher different from a MatchResult, containing captures as well
         we'd like capture handling to be done by the framework, after all - and Match is produced by the user's code
 

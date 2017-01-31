@@ -1,13 +1,10 @@
 package rocks.matchmaker;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.unmodifiableMap;
+import static rocks.matchmaker.Util.checkNotNull;
 
 public abstract class Match<T> {
 
@@ -19,16 +16,9 @@ public abstract class Match<T> {
         return !isPresent();
     }
 
-    static <S> Match<S> of(S value) {
-        return new Match.Present<>(value, emptyMap());
-    }
-
-    static <S> Match<S> of(S value, Map<Capture<?>, Object> captures) {
-        return new Match.Present<>(value, immutableMap(captures));
-    }
-
-    static Map<Capture<?>, Object> immutableMap(Map<Capture<?>, Object> captures) {
-        return unmodifiableMap(new LinkedHashMap<>(captures));
+    static <S> Match<S> of(S value, Captures captures) {
+        checkNotNull(captures);
+        return new Match.Present<>(value, captures);
     }
 
     static <S> Match<S> empty() {
@@ -41,18 +31,18 @@ public abstract class Match<T> {
 
     public abstract <U> Match<U> flatMap(Function<? super T, Match<U>> mapper);
 
-    public abstract <S> S capture(Capture<S> capture);
+    public <S> S capture(Capture<S> capture) {
+        return captures().get(capture);
+    }
 
-    protected abstract Map<Capture<?>, Object> captures();
-
-    protected abstract Match<T> withCapture(Capture<?> capture, Object value);
+    public abstract Captures captures();
 
     static class Present<T> extends Match<T> {
 
         private final T value;
-        private final Map<Capture<?>, Object> captures;
+        private final Captures captures;
 
-        private Present(T value, Map<Capture<?>, Object> captures) {
+        private Present(T value, Captures captures) {
             this.value = value;
             this.captures = captures;
         }
@@ -74,7 +64,7 @@ public abstract class Match<T> {
 
         @Override
         public <U> Match<U> map(Function<? super T, ? extends U> mapper) {
-            return Match.of(mapper.apply(value), captures);
+            return Match.of(mapper.apply(value), captures());
         }
 
         @Override
@@ -83,28 +73,8 @@ public abstract class Match<T> {
         }
 
         @Override
-        public <S> S capture(Capture<S> capture) {
-            if (!captures.containsKey(capture)) {
-                throw new IllegalArgumentException("This capture is unknown to this matcher.");
-            }
-            return getCaptureAndCast(capture);
-        }
-
-        @Override
-        protected Map<Capture<?>, Object> captures() {
+        public Captures captures() {
             return captures;
-        }
-
-        @Override
-        public Match<T> withCapture(Capture<?> capture, Object value) {
-            LinkedHashMap<Capture<?>, Object> newCaptures = new LinkedHashMap<>(captures);
-            newCaptures.put(capture, value);
-            return Match.of(this.value, newCaptures);
-        }
-
-        @SuppressWarnings("unchecked cast")
-        private <S> S getCaptureAndCast(Capture<S> capture) {
-            return (S) captures.get(capture);
         }
 
         @Override
@@ -114,13 +84,13 @@ public abstract class Match<T> {
 
             Present<?> present = (Present<?>) o;
 
-            if (!value.equals(present.value)) return false;
+            if (value != null ? !value.equals(present.value) : present.value != null) return false;
             return captures.equals(present.captures);
         }
 
         @Override
         public int hashCode() {
-            int result = value.hashCode();
+            int result = value != null ? value.hashCode() : 0;
             result = 31 * result + captures.hashCode();
             return result;
         }
@@ -162,18 +132,8 @@ public abstract class Match<T> {
         }
 
         @Override
-        public <S> S capture(Capture<S> capture) {
-            throw new NoSuchElementException("Captures are undefined for an empty match");
-        }
-
-        @Override
-        protected Map<Capture<?>, Object> captures() {
-            throw new NoSuchElementException("Captures are undefined for an empty match");
-        }
-
-        @Override
-        protected Match<T> withCapture(Capture<?> capture, Object value) {
-            throw new IllegalStateException("Can't register capture in an empty match");
+        public Captures captures() {
+            throw new NoSuchElementException("Empty match contains no value");
         }
 
         public boolean equals(Object o) {

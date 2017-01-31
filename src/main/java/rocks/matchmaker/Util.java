@@ -11,4 +11,11 @@ public class Util {
         newList.add(element);
         return Collections.unmodifiableList(newList);
     }
+
+    public static <T> T checkNotNull(T value) {
+        if (value == null) {
+            throw new NullPointerException("Value cannot be null");
+        }
+        return value;
+    }
 }
