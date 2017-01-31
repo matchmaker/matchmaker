@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
 public class Matcher<T> {
@@ -40,15 +41,24 @@ public class Matcher<T> {
      * @param <T>       type of the extracted value
      * @return
      */
-    public static <T> Matcher<T> match(Extractor<T> extractor) {
-        return new Matcher<>(extractor, emptyList(), null);
+    public static <F, T> Matcher<T> match(Extractor.Scoped<F, T> extractor) {
+        return new Matcher<>(extractor.getScopeType(), extractor, emptyList(), null);
     }
 
+    //TODO rethink having this method and the non-scoped extractor at all
+    //(match selectiveness? strctural matching selectivity? performance?)
+    public static <T> Matcher<T> match(Extractor<T> extractor) {
+        return new Matcher<>(Object.class, extractor, emptyList(), null);
+    }
+
+    //scopeType unused for now, but will help in debugging and structural matching later
+    private final Class<?> scopeType;
     private final Extractor<T> extractor;
     private final List<PropertyMatcher<T, ?>> propertyMatchers;
     private final Capture<T> capture;
 
-    private Matcher(Extractor<T> extractor, List<PropertyMatcher<T, ?>> propertyMatchers, Capture<T> capture) {
+    private Matcher(Class<?> scopeType, Extractor<T> extractor, List<PropertyMatcher<T, ?>> propertyMatchers, Capture<T> capture) {
+        this.scopeType = scopeType;
         this.extractor = extractor;
         this.propertyMatchers = propertyMatchers;
         this.capture = capture;
@@ -58,12 +68,30 @@ public class Matcher<T> {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
-        return new Matcher<>(extractor, propertyMatchers, capture);
+        return new Matcher<>(scopeType, extractor, propertyMatchers, capture);
     }
 
-    @SuppressWarnings("unchecked cast")
+    public Matcher<T> matching(T value) {
+        Class<T> scopeClass = (Class<T>) value.getClass();
+        return matching(scopeClass, x -> x.equals(value));
+    }
+
+    public Matcher<T> matching(Class<T> scopeType, Predicate<T> predicate) {
+        return matching(Extractor.assumingType(scopeType, x -> Option.of(x).filter(predicate)));
+    }
+
+    public Matcher<T> matching(Extractor.Scoped<?, T> extractor) {
+        Matcher<T> matcher = match(extractor);
+        return matching(matcher);
+    }
+
+    public <S> Matcher<T> matching(Matcher<S> matcher) {
+        PropertyMatcher<T, S> selfMatcher = new PropertyMatcher<>(identity(), matcher);
+        return with(selfMatcher);
+    }
+
     public Matcher<T> with(PropertyMatcher<T, ?> matcher) {
-        return new Matcher<>(extractor, Util.append(propertyMatchers, matcher), capture);
+        return new Matcher<>(scopeType, extractor, Util.append(propertyMatchers, matcher), capture);
     }
 
     public Match<T> match(Object object) {

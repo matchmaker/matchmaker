@@ -68,6 +68,35 @@ public class MatcherTest {
     }
 
     @Test
+    void match_additional_properties() {
+        Capture<List<String>> lowercase = newCapture();
+
+        String matchedValue = "A little string.";
+
+        Matcher<String> matcher = match(String.class)
+                .matching(String.class, s -> s.startsWith("A"))
+                .matching(endsWith("."))
+                .matching(hasLowercaseChars.capturedAs(lowercase))
+                .matching(matchedValue);
+
+        Match<String> match = assertMatch(matcher, matchedValue);
+        assertEquals(match.capture(lowercase), characters(" little string.").collect(toList()));
+    }
+
+    private Extractor.Scoped<String, String> endsWith(String suffix) {
+        return assumingType(String.class, string -> Option.of(suffix).filter(__ -> string.endsWith(suffix)));
+    }
+
+    private Matcher<List<String>> hasLowercaseChars = match(assumingType(String.class, string -> {
+        List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
+        return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
+    }));
+
+    private boolean isLowerCase(String string) {
+        return string.toLowerCase().equals(string);
+    }
+
+    @Test
     void capturing_matches_in_a_typesafe_manner() {
         Capture<ProjectNode> child = newCapture();
         Capture<FilterNode> filter = newCapture();
@@ -88,8 +117,7 @@ public class MatcherTest {
     @Test
     void evidence_backed_matching_using_extractors() {
         Matcher<List<String>> stringWithVowels = match(assumingType(String.class, (x) -> {
-            Stream<String> characters = x.chars().mapToObj(c -> String.valueOf((char) c));
-            List<String> vowels = characters.filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
+            List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
         }));
 
@@ -99,6 +127,10 @@ public class MatcherTest {
         assertEquals(match.value(), match.capture(vowels));
 
         assertNoMatch(stringWithVowels, "pqrst");
+    }
+
+    private Stream<String> characters(String string) {
+        return string.chars().mapToObj(c -> String.valueOf((char) c));
     }
 
     @Test

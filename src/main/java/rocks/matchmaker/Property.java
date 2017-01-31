@@ -4,17 +4,14 @@ import java.util.function.Function;
 
 public interface Property<T> {
 
+    <S> PropertyMatcher<T, S> matching(Matcher<S> matcher);
+
     static <T> Property<T> property(Function<T, ?> property) {
         return new Property<T>() {
-            @SuppressWarnings("unchecked cast")
             @Override
-            public <S> PropertyMatcher<T, S> matching(Matcher<?> matcher) {
-                Function<T, S> propertyCast = (Function<T, S>) property;
-                Matcher<S> matcherCast = (Matcher<S>) matcher;
-                return new PropertyMatcher<>(propertyCast, matcherCast);
+            public <S> PropertyMatcher<T, S> matching(Matcher<S> matcher) {
+                return new PropertyMatcher<>(property, matcher);
             }
         };
     }
-
-    <S> PropertyMatcher<T, S> matching(Matcher<? extends Object> matcher);
 }
