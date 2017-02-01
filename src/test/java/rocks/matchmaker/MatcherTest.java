@@ -1,7 +1,11 @@
 package rocks.matchmaker;
 
 import example.ast.FilterNode;
+import example.ast.JoinNode;
+import example.ast.PlanNode;
 import example.ast.ProjectNode;
+import example.ast.ScanNode;
+import example.ast.SingleSourcePlanNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,15 +21,18 @@ import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.match;
+import static rocks.matchmaker.Property.optionalProperty;
 import static rocks.matchmaker.Property.property;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
     Matcher<ProjectNode> Project = match(ProjectNode.class);
-    Property<ProjectNode> source = property(ProjectNode::getSource);
-
     Matcher<FilterNode> Filter = match(FilterNode.class);
+    Matcher<ScanNode> Scan = match(ScanNode.class);
+
+    Property<SingleSourcePlanNode> source = property(SingleSourcePlanNode::getSource);
+
 
     @Test
     void trivial_matchers() {
@@ -46,7 +53,7 @@ public class MatcherTest {
     @Test
     void match_object() {
         assertMatch(Project, new ProjectNode(null));
-        assertNoMatch(Project, new FilterNode(null));
+        assertNoMatch(Project, new ScanNode());
     }
 
     @Test
@@ -59,10 +66,10 @@ public class MatcherTest {
     @Test
     void match_nested_properties() {
         Matcher<ProjectNode> matcher = Project
-                .with(property(ProjectNode::getSource).matching(Filter));
+                .with(property(ProjectNode::getSource).matching(Scan));
 
-        assertMatch(matcher, new ProjectNode(new FilterNode(null)));
-        assertNoMatch(matcher, new FilterNode(null));
+        assertMatch(matcher, new ProjectNode(new ScanNode()));
+        assertNoMatch(matcher, new ScanNode());
         assertNoMatch(matcher, new ProjectNode(null));
         assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
     }
@@ -97,21 +104,36 @@ public class MatcherTest {
     }
 
     @Test
+    void optional_properties() {
+        Property<PlanNode> onlySource = optionalProperty(node ->
+                Option.of(node.getSources())
+                        .filter(sources -> sources.size() == 1)
+                        .map(sources -> sources.get(0)));
+
+        Matcher<PlanNode> planNodeWithExactlyOneSource = match(PlanNode.class)
+                .with(onlySource.matching(any()));
+
+        assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode()));
+        assertNoMatch(planNodeWithExactlyOneSource, new ScanNode());
+        assertNoMatch(planNodeWithExactlyOneSource, new JoinNode(new ScanNode(), new ScanNode()));
+    }
+
+    @Test
     void capturing_matches_in_a_typesafe_manner() {
-        Capture<ProjectNode> child = newCapture();
         Capture<FilterNode> filter = newCapture();
+        Capture<ScanNode> scan = newCapture();
 
         Matcher<ProjectNode> matcher = Project
-                .with(source.matching(Project.capturedAs(child)
-                        .with(source.matching(Filter.capturedAs(filter)))));
+                .with(source.matching(Filter.capturedAs(filter)
+                        .with(source.matching(Scan.capturedAs(scan)))));
 
-        ProjectNode tree = new ProjectNode(new ProjectNode(new FilterNode(null)));
+        ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode(), null));
 
         Match<ProjectNode> match = assertMatch(matcher, tree);
         //notice the concrete type despite no casts:
-        ProjectNode capturedChild = match.capture(child);
-        assertEquals(tree.getSource(), capturedChild);
-        assertEquals(((ProjectNode) tree.getSource()).getSource(), match.capture(filter));
+        FilterNode capturedFilter = match.capture(filter);
+        assertEquals(tree.getSource(), capturedFilter);
+        assertEquals(((FilterNode) tree.getSource()).getSource(), match.capture(scan));
     }
 
     @Test

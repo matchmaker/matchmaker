@@ -1,6 +1,6 @@
 package example.ast;
 
-public class ProjectNode implements PlanNode {
+public class ProjectNode implements SingleSourcePlanNode {
 
     private PlanNode source;
 

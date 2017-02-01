@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
 public class Matcher<T> {
@@ -86,12 +85,19 @@ public class Matcher<T> {
     }
 
     public <S> Matcher<T> matching(Matcher<S> matcher) {
-        PropertyMatcher<T, S> selfMatcher = new PropertyMatcher<>(identity(), matcher);
+        PropertyMatcher<T, S> selfMatcher = new PropertyMatcher<>(Option::of, matcher);
         return with(selfMatcher);
     }
 
-    public Matcher<T> with(PropertyMatcher<T, ?> matcher) {
-        return new Matcher<>(scopeType, extractor, Util.append(propertyMatchers, matcher), capture);
+    public Matcher<T> with(PropertyMatcher<? super T, ?> matcher) {
+        PropertyMatcher<T, ?> castMatcher = contravariantUpcast(matcher);
+        return new Matcher<>(scopeType, extractor, Util.append(propertyMatchers, castMatcher), capture);
+    }
+
+    //this reflects the fact that PropertyMatcher<F, T> is contravariant on F
+    @SuppressWarnings("unchecked cast")
+    private PropertyMatcher<T, ?> contravariantUpcast(PropertyMatcher<? super T, ?> matcher) {
+        return (PropertyMatcher<T, ?>) matcher;
     }
 
     public Match<T> match(Object object) {
@@ -108,9 +114,11 @@ public class Matcher<T> {
     }
 
     protected List<Match<?>> propertiesMatches(T matchedValue) {
-        return propertyMatchers.stream().map(pm -> {
-            Object propertyValue = pm.getProperty().apply(matchedValue);
-            return pm.getMatcher().match(propertyValue);
+        return propertyMatchers.stream().map(propertyMatcher -> {
+            Option<?> propertyValueOption = propertyMatcher.getProperty().apply(matchedValue);
+            return propertyValueOption
+                    .map(value -> propertyMatcher.getMatcher().match(value))
+                    .orElse(Match.empty());
         }).collect(toList());
     }
 

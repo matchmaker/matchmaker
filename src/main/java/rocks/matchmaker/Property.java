@@ -7,6 +7,10 @@ public interface Property<T> {
     <S> PropertyMatcher<T, S> matching(Matcher<S> matcher);
 
     static <T> Property<T> property(Function<T, ?> property) {
+        return optionalProperty(source -> Option.of(property.apply(source)));
+    }
+
+    static <T> Property<T> optionalProperty(Function<T, Option<?>> property) {
         return new Property<T>() {
             @Override
             public <S> PropertyMatcher<T, S> matching(Matcher<S> matcher) {
