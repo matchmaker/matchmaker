@@ -1,10 +1,10 @@
 package rocks.matchmaker;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 
 public class Matcher<T> {
 
@@ -101,32 +101,37 @@ public class Matcher<T> {
     }
 
     public Match<T> match(Object object) {
-        Option<T> extractionResult = extractor.apply(object);
+        return match(object, Captures.empty());
+    }
+
+    public Match<T> match(Object object, Captures captures) {
+        Match<T> selfMatch = matchSelf(object, captures);
+        return matchProperties(selfMatch);
+    }
+
+    protected Match<T> matchSelf(Object object, Captures captures) {
+        Option<T> extractionResult = extractor.apply(object, captures);
         return extractionResult
-                .map(this::tryCreateMatch)
+                .map(value -> Match.of(value, captures.addAll(Captures.ofNullable(capture, value))))
                 .orElse(Match.empty());
     }
 
-    private Match<T> tryCreateMatch(T matchedValue) {
-        List<Match<?>> propertiesMatches = propertiesMatches(matchedValue);
-        boolean allPropertiesMatch = propertiesMatches.stream().allMatch(Match::isPresent);
-        return allPropertiesMatch ? combineCaptures(matchedValue, propertiesMatches) : Match.empty();
+    //TODO at this moment my functional programming is too impaired to do it in a more idiomatic way...
+    protected Match<T> matchProperties(Match<T> selfMatch) {
+        Iterator<PropertyMatcher<T, ?>> iterator = propertyMatchers.iterator();
+        while (iterator.hasNext() && selfMatch.isPresent()) {
+            PropertyMatcher<T, ?> propertyMatcher = iterator.next();
+            selfMatch = matchProperty(selfMatch, propertyMatcher);
+        }
+        return selfMatch;
     }
 
-    protected List<Match<?>> propertiesMatches(T matchedValue) {
-        return propertyMatchers.stream().map(propertyMatcher -> {
-            Option<?> propertyValueOption = propertyMatcher.getProperty().apply(matchedValue);
-            return propertyValueOption
-                    .map(value -> propertyMatcher.getMatcher().match(value))
-                    .orElse(Match.empty());
-        }).collect(toList());
-    }
+    //FIXME this assumes `selfMatch.isPresent()`, due to the iteration in method above
+    protected Match<T> matchProperty(Match<T> selfMatch, PropertyMatcher<T, ?> propertyMatcher) {
+        Option<?> propertyValueOption = propertyMatcher.getProperty().apply(selfMatch.value());
 
-    private Match<T> combineCaptures(T matchedValue, List<Match<?>> propertyMatches) {
-        Captures thisMatcherCaptures = Captures.ofNullable(capture, matchedValue);
-        Captures allCaptures = propertyMatches.stream()
-                .map(Match::captures)
-                .reduce(thisMatcherCaptures, Captures::addAll);
-        return Match.of(matchedValue, allCaptures);
+        return propertyValueOption
+                .map(value -> propertyMatcher.getMatcher().match(value, selfMatch.captures()).flatMap(__ -> selfMatch))
+                .orElse(Match.empty());
     }
 }

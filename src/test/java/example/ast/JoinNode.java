@@ -18,4 +18,12 @@ public class JoinNode implements PlanNode {
     public List<PlanNode> getSources() {
         return asList(probe, build);
     }
+
+    public PlanNode getProbe() {
+        return probe;
+    }
+
+    public PlanNode getBuild() {
+        return build;
+    }
 }

@@ -27,6 +27,11 @@ import static rocks.matchmaker.Property.property;
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
+    Matcher<JoinNode> Join = match(JoinNode.class);
+
+    Property<JoinNode> probe = property(JoinNode::getProbe);
+    Property<JoinNode> build = property(JoinNode::getBuild);
+
     Matcher<ProjectNode> Project = match(ProjectNode.class);
     Matcher<FilterNode> Filter = match(FilterNode.class);
     Matcher<ScanNode> Scan = match(ScanNode.class);
@@ -180,12 +185,42 @@ public class MatcherTest {
     }
 
     @Test
+    void extractors_parameterized_with_captures() {
+        Capture<JoinNode> root = newCapture();
+        Capture<JoinNode> parent = newCapture();
+        Capture<ScanNode> left = newCapture();
+        Capture<ScanNode> right = newCapture();
+        Capture<List<PlanNode>> caputres = newCapture();
+
+        Matcher<List<PlanNode>> accessingTheDesiredCaptures = match(assumingType(PlanNode.class, (node, params) ->
+                Option.of(asList(
+                        params.get(left), params.get(right), params.get(root), params.get(parent)
+                )))
+        );
+
+        Matcher<JoinNode> matcher = Join.capturedAs(root)
+                .with(probe.matching(Join.capturedAs(parent)
+                        .with(probe.matching(Scan.capturedAs(left)))
+                        .with(build.matching(Scan.capturedAs(right)))))
+                .with(build.matching(Scan
+                        .matching(accessingTheDesiredCaptures.capturedAs(caputres))));
+
+        ScanNode expectedLeft = new ScanNode();
+        ScanNode expectedRight = new ScanNode();
+        JoinNode expectedParent = new JoinNode(expectedLeft, expectedRight);
+        JoinNode expectedRoot = new JoinNode(expectedParent, new ScanNode());
+
+        Match<JoinNode> match = assertMatch(matcher, expectedRoot);
+        assertEquals(match.capture(caputres), asList(expectedLeft, expectedRight, expectedRoot, expectedParent));
+    }
+
+    @Test
     void null_not_matched_by_default() {
         assertNoMatch(any(), null);
         assertNoMatch(match(Integer.class), null);
 
         //nulls can be matched using a custom extractor for now
-        Extractor<Object> nullAcceptingExtractor = (x) -> Option.of(x);
+        Extractor<Object> nullAcceptingExtractor = (x, captures) -> Option.of(x);
         assertMatch(match(nullAcceptingExtractor), null);
     }
 
