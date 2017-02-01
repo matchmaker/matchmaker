@@ -69,7 +69,8 @@ public abstract class Match<T> {
 
         @Override
         public <U> Match<U> flatMap(Function<? super T, Match<U>> mapper) {
-            return mapper.apply(value);
+            Match<U> mapped = mapper.apply(value);
+            return Match.of(mapped.value(), captures().addAll(mapped.captures()));
         }
 
         @Override
