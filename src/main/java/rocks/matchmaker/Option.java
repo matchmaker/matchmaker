@@ -10,11 +10,11 @@ public abstract class Option<T> {
 
     public abstract T value();
 
-    static <S> Option<S> of(S value) {
+    public static <S> Option<S> of(S value) {
         return new Present<>(value);
     }
 
-    static <S> Option<S> empty() {
+    public static <S> Option<S> empty() {
         return new Empty<>();
     }
 
