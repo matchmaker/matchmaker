@@ -18,4 +18,8 @@ public interface Property<T> {
             }
         };
     }
+
+    static <T> Property<T> self() {
+        return property(Function.identity());
+    }
 }
