@@ -59,7 +59,7 @@ public class MatcherTest {
     @Test
     void match_object() {
         assertMatch(Project, new ProjectNode(null));
-        assertNoMatch(Project, new ScanNode());
+        assertNoMatch(Project, new ScanNode("t"));
     }
 
     @Test
@@ -74,8 +74,8 @@ public class MatcherTest {
         Matcher<ProjectNode> matcher = Project
                 .with(property(ProjectNode::getSource).matching(Scan));
 
-        assertMatch(matcher, new ProjectNode(new ScanNode()));
-        assertNoMatch(matcher, new ScanNode());
+        assertMatch(matcher, new ProjectNode(new ScanNode("t")));
+        assertNoMatch(matcher, new ScanNode("t"));
         assertNoMatch(matcher, new ProjectNode(null));
         assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
     }
@@ -119,9 +119,9 @@ public class MatcherTest {
         Matcher<PlanNode> planNodeWithExactlyOneSource = matcher(PlanNode.class)
                 .with(onlySource.matching(any()));
 
-        assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode()));
-        assertNoMatch(planNodeWithExactlyOneSource, new ScanNode());
-        assertNoMatch(planNodeWithExactlyOneSource, new JoinNode(new ScanNode(), new ScanNode()));
+        assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode("t")));
+        assertNoMatch(planNodeWithExactlyOneSource, new ScanNode("t"));
+        assertNoMatch(planNodeWithExactlyOneSource, new JoinNode(new ScanNode("t"), new ScanNode("t")));
     }
 
     @Test
@@ -133,7 +133,7 @@ public class MatcherTest {
                 .with(source.matching(Filter.capturedAs(filter)
                         .with(source.matching(Scan.capturedAs(scan)))));
 
-        ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode(), null));
+        ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 
         Match<ProjectNode> match = assertMatch(matcher, tree);
         //notice the concrete type despite no casts:
@@ -206,10 +206,10 @@ public class MatcherTest {
                 .with(build.matching(Scan
                         .matching(accessingTheDesiredCaptures.capturedAs(caputres))));
 
-        ScanNode expectedLeft = new ScanNode();
-        ScanNode expectedRight = new ScanNode();
+        ScanNode expectedLeft = new ScanNode("a");
+        ScanNode expectedRight = new ScanNode("b");
         JoinNode expectedParent = new JoinNode(expectedLeft, expectedRight);
-        JoinNode expectedRoot = new JoinNode(expectedParent, new ScanNode());
+        JoinNode expectedRoot = new JoinNode(expectedParent, new ScanNode("c"));
 
         Match<JoinNode> match = assertMatch(matcher, expectedRoot);
         assertEquals(match.capture(caputres), asList(expectedLeft, expectedRight, expectedRoot, expectedParent));
