@@ -142,4 +142,40 @@ public class Matcher<T> {
     protected Option<?> evaluateProperty(T selfValue, Function<T, Option<?>> property) {
         return property.apply(selfValue);
     }
+
+    /**
+     * This method produces an Internals token used to access
+     * internal properties of Matchers. The purpose of this method
+     * is to warn users that any method accepting the token and
+     * any values received from token-accepting methods is subject
+     * to change in future versions.
+     *
+     * @return Matcher.Internals access token
+     */
+    public static Internals internals() {
+        return Internals.INSTANCE;
+    }
+
+    private enum Internals {
+        INSTANCE;
+        private <T> T access(T value) {
+            return value;
+        }
+    }
+
+    public Class<?> getScopeType(Internals internals) {
+        return scopeType;
+    }
+
+    public Extractor<T> getExtractor(Internals internals) {
+        return internals.access(extractor);
+    }
+
+    public List<PropertyMatcher<T, ?>> getPropertyMatchers(Internals internals) {
+        return internals.access(propertyMatchers);
+    }
+
+    public Capture<T> getCapture(Internals internals) {
+        return internals.access(capture);
+    }
 }
