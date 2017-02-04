@@ -1,8 +1,8 @@
 package rocks.matchmaker;
 
-import java.util.Iterator;
+import rocks.matchmaker.matching.DefaultMatchingStrategy;
+
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
@@ -106,45 +106,11 @@ public class Matcher<T> {
     }
 
     public Match<T> match(Object object, Captures captures) {
-        Match<T> selfMatch = matchSelf(object, captures);
-        return matchProperties(selfMatch, propertyMatchers);
+        return match(object, captures, DefaultMatchingStrategy.INSTANCE);
     }
 
-    protected Match<T> matchSelf(Object object, Captures captures) {
-        Option<T> extractionResult = extractor.apply(object, captures);
-        return extractionResult
-                .map(value -> createMatch(value, captures, capture))
-                .orElse(Match.empty());
-    }
-
-    protected <T> Match<T> createMatch(T value, Captures captures, Capture<T> capture) {
-        return Match.of(value, captures.addAll(Captures.ofNullable(capture, value)));
-    }
-
-    //TODO express it in an idiomatic way - this is similar to Haskell's mapM
-    protected Match<T> matchProperties(Match<T> selfMatch, Iterable<PropertyMatcher<T, ?>> propertyMatchers) {
-        Iterator<PropertyMatcher<T, ?>> iterator = propertyMatchers.iterator();
-        while (iterator.hasNext() && selfMatch.isPresent()) {
-            PropertyMatcher<T, ?> propertyMatcher = iterator.next();
-            T selfValue = selfMatch.value();
-            Match<?> propertyMatch = matchProperty(propertyMatcher, selfValue, selfMatch.captures());
-            selfMatch = replaceResult(propertyMatch, selfValue);
-        }
-        return selfMatch;
-    }
-
-    private Match<T> replaceResult(Match<?> match, T resultReplacement) {
-        return match.map(__ -> resultReplacement);
-    }
-
-    protected Match<?> matchProperty(PropertyMatcher<T, ?> propertyMatcher, T selfValue, Captures captures) {
-        return evaluateProperty(selfValue, propertyMatcher.getProperty())
-                .map(propertyValue -> propertyMatcher.getMatcher().match(propertyValue, captures))
-                .orElse(Match.empty());
-    }
-
-    protected Option<?> evaluateProperty(T selfValue, Function<T, Option<?>> property) {
-        return property.apply(selfValue);
+    public Match<T> match(Object object, Captures captures, MatchingStrategy matchingStrategy) {
+        return matchingStrategy.match(this, object, captures);
     }
 
     /**
