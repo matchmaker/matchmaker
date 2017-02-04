@@ -107,18 +107,22 @@ public class Matcher<T> {
 
     public Match<T> match(Object object, Captures captures) {
         Match<T> selfMatch = matchSelf(object, captures);
-        return matchProperties(selfMatch);
+        return matchProperties(selfMatch, propertyMatchers);
     }
 
     protected Match<T> matchSelf(Object object, Captures captures) {
         Option<T> extractionResult = extractor.apply(object, captures);
         return extractionResult
-                .map(value -> Match.of(value, captures.addAll(Captures.ofNullable(capture, value))))
+                .map(value -> createMatch(value, captures, capture))
                 .orElse(Match.empty());
     }
 
+    protected <T> Match<T> createMatch(T value, Captures captures, Capture<T> capture) {
+        return Match.of(value, captures.addAll(Captures.ofNullable(capture, value)));
+    }
+
     //TODO express it in an idiomatic way - this is similar to Haskell's mapM
-    protected Match<T> matchProperties(Match<T> selfMatch) {
+    protected Match<T> matchProperties(Match<T> selfMatch, Iterable<PropertyMatcher<T, ?>> propertyMatchers) {
         Iterator<PropertyMatcher<T, ?>> iterator = propertyMatchers.iterator();
         while (iterator.hasNext() && selfMatch.isPresent()) {
             PropertyMatcher<T, ?> propertyMatcher = iterator.next();
