@@ -23,6 +23,7 @@ import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.matcher;
 import static rocks.matchmaker.Property.optionalProperty;
 import static rocks.matchmaker.Property.property;
+import static rocks.matchmaker.Property.self;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
@@ -72,12 +73,14 @@ public class MatcherTest {
         assertMatch(aString.with(length.matching(1)), string);
         assertMatch(aString.with(length.matching(Integer.class, x -> x > 0)), string);
         assertMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.of(x.toString())))), string);
-        assertMatch(aString.with(length.matching(matcher(Integer.class))), string);
+        assertMatch(aString.with(length.matching(any())), string);
+        assertMatch(aString.with(self().matching(string)), string);
 
         assertNoMatch(aString.with(length.matching(0)), string);
         assertNoMatch(aString.with(length.matching(Integer.class, x -> x < 1)), string);
         assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
         assertNoMatch(aString.with(length.matching(matcher(Void.class))), string);
+        assertNoMatch(aString.with(self().matching("b")), string);
     }
 
     @Test
