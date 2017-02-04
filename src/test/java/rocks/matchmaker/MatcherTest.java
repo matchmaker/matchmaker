@@ -54,7 +54,7 @@ public class MatcherTest {
         assertNoMatch(matcher(Integer.class), "John Doe");
 
         //predicate-based
-        assertMatch(matcher(Integer.class, x1 -> x1 > 0), 42);
+        assertMatch(matcher(Integer.class, x -> x > 0), 42);
         assertNoMatch(matcher(Integer.class, x -> x > 0), -1);
     }
 
