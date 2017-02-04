@@ -16,12 +16,12 @@ public abstract class Match<T> {
         return !isPresent();
     }
 
-    static <S> Match<S> of(S value, Captures captures) {
+    public static <S> Match<S> of(S value, Captures captures) {
         checkNotNull(captures);
         return new Match.Present<>(value, captures);
     }
 
-    static <S> Match<S> empty() {
+    public static <S> Match<S> empty() {
         return new Match.Empty<>();
     }
 
