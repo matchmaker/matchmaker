@@ -36,6 +36,7 @@ public class MatcherTest {
     Matcher<FilterNode> Filter = matcher(FilterNode.class);
 
     Matcher<ScanNode> Scan = matcher(ScanNode.class);
+    Property<ScanNode> tableName = property(ScanNode::getTableName);
 
     Property<SingleSourcePlanNode> source = property(SingleSourcePlanNode::getSource);
 
@@ -64,9 +65,19 @@ public class MatcherTest {
 
     @Test
     void property_matchers() {
-        PropertyMatcher<String, Integer> lengthOne = property(String::length).matching(matcher(Integer.class, (x) -> x == 1));
-        assertMatch(matcher(String.class).with(lengthOne), "a");
-        assertNoMatch(matcher(String.class).with(lengthOne), "aa");
+        Matcher<String> aString = matcher(String.class);
+        Property<String> length = property(String::length);
+        String string = "a";
+
+        assertMatch(aString.with(length.matching(1)), string);
+        assertMatch(aString.with(length.matching(Integer.class, x -> x > 0)), string);
+        assertMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.of(x.toString())))), string);
+        assertMatch(aString.with(length.matching(matcher(Integer.class))), string);
+
+        assertNoMatch(aString.with(length.matching(0)), string);
+        assertNoMatch(aString.with(length.matching(Integer.class, x -> x < 1)), string);
+        assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
+        assertNoMatch(aString.with(length.matching(matcher(Void.class))), string);
     }
 
     @Test
@@ -131,7 +142,8 @@ public class MatcherTest {
 
         Matcher<ProjectNode> matcher = Project
                 .with(source.matching(Filter.capturedAs(filter)
-                        .with(source.matching(Scan.capturedAs(scan)))));
+                        .with(source.matching(Scan.capturedAs(scan)
+                                .with(tableName.matching("orders"))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 

@@ -13,7 +13,7 @@ public class Matcher<T> {
         return matcher(Object.class);
     }
 
-    public static <T> Matcher<T> matcher(T expectedValue) {
+    public static <T> Matcher<T> equalTo(T expectedValue) {
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
         return matcher(expectedClass, (x) -> x.equals(expectedValue));
     }
@@ -77,7 +77,7 @@ public class Matcher<T> {
     }
 
     public Matcher<T> matching(T value) {
-        return matching(matcher(value));
+        return matching(equalTo(value));
     }
 
     public Matcher<T> matching(Class<T> scopeType, Predicate<T> predicate) {
