@@ -20,21 +20,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.any;
-import static rocks.matchmaker.Matcher.match;
+import static rocks.matchmaker.Matcher.matcher;
 import static rocks.matchmaker.Property.optionalProperty;
 import static rocks.matchmaker.Property.property;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
-    Matcher<JoinNode> Join = match(JoinNode.class);
+    Matcher<JoinNode> Join = matcher(JoinNode.class);
 
     Property<JoinNode> probe = property(JoinNode::getProbe);
     Property<JoinNode> build = property(JoinNode::getBuild);
 
-    Matcher<ProjectNode> Project = match(ProjectNode.class);
-    Matcher<FilterNode> Filter = match(FilterNode.class);
-    Matcher<ScanNode> Scan = match(ScanNode.class);
+    Matcher<ProjectNode> Project = matcher(ProjectNode.class);
+    Matcher<FilterNode> Filter = matcher(FilterNode.class);
+
+    Matcher<ScanNode> Scan = matcher(ScanNode.class);
 
     Property<SingleSourcePlanNode> source = property(SingleSourcePlanNode::getSource);
 
@@ -46,13 +47,13 @@ public class MatcherTest {
         assertMatch(any(), "John Doe");
 
         //class based
-        assertMatch(match(Integer.class), 42);
-        assertMatch(match(Number.class), 42);
-        assertNoMatch(match(Integer.class), "John Doe");
+        assertMatch(matcher(Integer.class), 42);
+        assertMatch(matcher(Number.class), 42);
+        assertNoMatch(matcher(Integer.class), "John Doe");
 
         //predicate-based
-        assertMatch(match(Integer.class, (x1) -> x1 > 0), 42);
-        assertNoMatch(match(Integer.class, (x) -> x > 0), -1);
+        assertMatch(matcher(Integer.class, x1 -> x1 > 0), 42);
+        assertNoMatch(matcher(Integer.class, x -> x > 0), -1);
     }
 
     @Test
@@ -63,9 +64,9 @@ public class MatcherTest {
 
     @Test
     void property_matchers() {
-        PropertyMatcher<String, Integer> lengthOne = property(String::length).matching(match(Integer.class, (x) -> x == 1));
-        assertMatch(match(String.class).with(lengthOne), "a");
-        assertNoMatch(match(String.class).with(lengthOne), "aa");
+        PropertyMatcher<String, Integer> lengthOne = property(String::length).matching(matcher(Integer.class, (x) -> x == 1));
+        assertMatch(matcher(String.class).with(lengthOne), "a");
+        assertNoMatch(matcher(String.class).with(lengthOne), "aa");
     }
 
     @Test
@@ -85,7 +86,7 @@ public class MatcherTest {
 
         String matchedValue = "A little string.";
 
-        Matcher<String> matcher = match(String.class)
+        Matcher<String> matcher = matcher(String.class)
                 .matching(String.class, s -> s.startsWith("A"))
                 .matching(endsWith("."))
                 .matching(hasLowercaseChars.capturedAs(lowercase))
@@ -99,7 +100,7 @@ public class MatcherTest {
         return assumingType(String.class, string -> Option.of(suffix).filter(__ -> string.endsWith(suffix)));
     }
 
-    private Matcher<List<String>> hasLowercaseChars = match(assumingType(String.class, string -> {
+    private Matcher<List<String>> hasLowercaseChars = matcher(assumingType(String.class, string -> {
         List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
         return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
     }));
@@ -115,7 +116,7 @@ public class MatcherTest {
                         .filter(sources -> sources.size() == 1)
                         .map(sources -> sources.get(0)));
 
-        Matcher<PlanNode> planNodeWithExactlyOneSource = match(PlanNode.class)
+        Matcher<PlanNode> planNodeWithExactlyOneSource = matcher(PlanNode.class)
                 .with(onlySource.matching(any()));
 
         assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode()));
@@ -143,7 +144,7 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = match(assumingType(String.class, (x) -> {
+        Matcher<List<String>> stringWithVowels = matcher(assumingType(String.class, x -> {
             List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
         }));
@@ -163,7 +164,7 @@ public class MatcherTest {
     @Test
     void no_match_means_no_captures() {
         Capture<Void> impossible = newCapture();
-        Matcher<Void> matcher = match(Void.class).capturedAs(impossible);
+        Matcher<Void> matcher = matcher(Void.class).capturedAs(impossible);
 
         Match<Void> match = matcher.match(42);
 
@@ -192,7 +193,7 @@ public class MatcherTest {
         Capture<ScanNode> right = newCapture();
         Capture<List<PlanNode>> caputres = newCapture();
 
-        Matcher<List<PlanNode>> accessingTheDesiredCaptures = match(assumingType(PlanNode.class, (node, params) ->
+        Matcher<List<PlanNode>> accessingTheDesiredCaptures = matcher(assumingType(PlanNode.class, (node, params) ->
                 Option.of(asList(
                         params.get(left), params.get(right), params.get(root), params.get(parent)
                 )))
@@ -217,11 +218,11 @@ public class MatcherTest {
     @Test
     void null_not_matched_by_default() {
         assertNoMatch(any(), null);
-        assertNoMatch(match(Integer.class), null);
+        assertNoMatch(matcher(Integer.class), null);
 
         //nulls can be matched using a custom extractor for now
         Extractor<Object> nullAcceptingExtractor = (x, captures) -> Option.of(x);
-        assertMatch(match(nullAcceptingExtractor), null);
+        assertMatch(matcher(nullAcceptingExtractor), null);
     }
 
     private <T> Match<T> assertMatch(Matcher<T> matcher, T expectedMatch) {

@@ -10,15 +10,20 @@ import static java.util.Collections.emptyList;
 public class Matcher<T> {
 
     public static Matcher<Object> any() {
-        return match(Object.class);
+        return matcher(Object.class);
     }
 
-    public static <T> Matcher<T> match(Class<T> expectedClass) {
-        return match(expectedClass, (x) -> true);
+    public static <T> Matcher<T> matcher(T expectedValue) {
+        Class<T> expectedClass = (Class<T>) expectedValue.getClass();
+        return matcher(expectedClass, (x) -> x.equals(expectedValue));
     }
 
-    public static <T> Matcher<T> match(Class<T> targetClass, Predicate<T> predicate) {
-        return match(Extractor.assumingType(targetClass, (x) -> Option.of(x).filter(predicate)));
+    public static <T> Matcher<T> matcher(Class<T> expectedClass) {
+        return matcher(expectedClass, (x) -> true);
+    }
+
+    public static <T> Matcher<T> matcher(Class<T> targetClass, Predicate<T> predicate) {
+        return matcher(Extractor.assumingType(targetClass, (x) -> Option.of(x).filter(predicate)));
     }
 
     /**
@@ -41,13 +46,13 @@ public class Matcher<T> {
      * @param <T>       type of the extracted value
      * @return
      */
-    public static <F, T> Matcher<T> match(Extractor.Scoped<F, T> extractor) {
+    public static <F, T> Matcher<T> matcher(Extractor.Scoped<F, T> extractor) {
         return new Matcher<>(extractor.getScopeType(), extractor, emptyList(), null);
     }
 
     //TODO rethink having this method and the non-scoped extractor at all
     //(match selectiveness? strctural matching selectivity? performance?)
-    public static <T> Matcher<T> match(Extractor<T> extractor) {
+    public static <T> Matcher<T> matcher(Extractor<T> extractor) {
         return new Matcher<>(Object.class, extractor, emptyList(), null);
     }
 
@@ -72,22 +77,20 @@ public class Matcher<T> {
     }
 
     public Matcher<T> matching(T value) {
-        Class<T> scopeClass = (Class<T>) value.getClass();
-        return matching(scopeClass, x -> x.equals(value));
+        return matching(matcher(value));
     }
 
     public Matcher<T> matching(Class<T> scopeType, Predicate<T> predicate) {
-        return matching(Extractor.assumingType(scopeType, x -> Option.of(x).filter(predicate)));
+        return matching(matcher(scopeType, predicate));
     }
 
     public Matcher<T> matching(Extractor.Scoped<?, T> extractor) {
-        Matcher<T> matcher = match(extractor);
-        return matching(matcher);
+        return matching(matcher(extractor));
     }
 
     public <S> Matcher<T> matching(Matcher<S> matcher) {
-        PropertyMatcher<T, S> selfMatcher = new PropertyMatcher<>(Option::of, matcher);
-        return with(selfMatcher);
+        PropertyMatcher<T, S> selfPropertyMatcher = new PropertyMatcher<>(Option::of, matcher);
+        return with(selfPropertyMatcher);
     }
 
     public Matcher<T> with(PropertyMatcher<? super T, ?> matcher) {
