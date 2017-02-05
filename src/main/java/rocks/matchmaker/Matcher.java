@@ -13,6 +13,11 @@ public class Matcher<T> {
         return matcher(Object.class);
     }
 
+    @SuppressWarnings("unchecked cast")
+    public static <T> Matcher<T> isNull() {
+        return (Matcher<T>) matcher(Object.class, x -> x == null);
+    }
+
     public static <T> Matcher<T> equalTo(T expectedValue) {
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
         return matcher(expectedClass, (x) -> x.equals(expectedValue));
