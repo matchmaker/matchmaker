@@ -28,6 +28,7 @@ public interface Property<T> {
         return matching(Matcher.equalTo(value));
     }
 
+    //TODO make Property carry the scopeType and remove scopeType / .Scoped from methods below?
     default <S> PropertyMatcher<T, S> matching(Class<S> scopeType, Predicate<S> predicate) {
         return matching(matcher(scopeType, predicate));
     }

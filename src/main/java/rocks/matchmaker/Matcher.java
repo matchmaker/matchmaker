@@ -61,13 +61,21 @@ public class Matcher<T> {
         return new Matcher<>(Object.class, extractor, emptyList(), null);
     }
 
+    //This expresses the fact that Matcher is covariant on T.
+    //This is saying "Matcher<? extends T> is a Matcher<T>".
+    @SuppressWarnings("unchecked cast")
+    public static <T> Matcher<T> covariantUpcast(Matcher<? extends T> matcher) {
+        return (Matcher<T>) matcher;
+    }
+
     //scopeType unused for now, but will help in debugging and structural matching later
     private final Class<?> scopeType;
     private final Extractor<T> extractor;
     private final List<PropertyMatcher<T, ?>> propertyMatchers;
     private final Capture<T> capture;
 
-    private Matcher(Class<?> scopeType, Extractor<T> extractor, List<PropertyMatcher<T, ?>> propertyMatchers, Capture<T> capture) {
+    //TODO think how to not have this package-private? Make Matcher an interface?
+    Matcher(Class<?> scopeType, Extractor<T> extractor, List<PropertyMatcher<T, ?>> propertyMatchers, Capture<T> capture) {
         this.scopeType = scopeType;
         this.extractor = extractor;
         this.propertyMatchers = propertyMatchers;

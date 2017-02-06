@@ -1,5 +1,6 @@
 package rocks.matchmaker;
 
+import example.ast.Exchange;
 import example.ast.FilterNode;
 import example.ast.JoinNode;
 import example.ast.PlanNode;
@@ -13,6 +14,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,6 +23,11 @@ import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.matcher;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.length_at_least_8;
+import static rocks.matchmaker.PatternMatch.matchFor;
 import static rocks.matchmaker.Property.optionalProperty;
 import static rocks.matchmaker.Property.property;
 import static rocks.matchmaker.Property.self;
@@ -33,6 +40,7 @@ public class MatcherTest {
     Property<JoinNode> probe = property(JoinNode::getProbe);
     Property<JoinNode> build = property(JoinNode::getBuild);
 
+    Matcher<PlanNode> Plan = matcher(PlanNode.class);
     Matcher<ProjectNode> Project = matcher(ProjectNode.class);
     Matcher<FilterNode> Filter = matcher(FilterNode.class);
 
@@ -228,6 +236,51 @@ public class MatcherTest {
 
         Match<JoinNode> match = assertMatch(matcher, expectedRoot);
         assertEquals(match.capture(caputres), asList(expectedLeft, expectedRight, expectedRoot, expectedParent));
+    }
+
+    //TODO add negative cases to the below
+    @Test
+    void pattern_matching_for_single_result() {
+        //We restrict the PatternMatch result type (here: Integer)
+        //to achieve type safety in return type of the '.returns(...)' part.
+        //We also restrict the type of the matchers used in cases (here: PlanNode)
+        //to achieve type safety in input type of the '.returns(...)' part.
+        Matcher<Integer> sourcesNumber = matchFor(PlanNode.class, Integer.class)
+                .caseOf(Scan).returns(() -> 0)
+                .caseOf(Filter).returns(() -> 1)
+                .caseOf(Project).returns(() -> 1)
+                .caseOf(Join).returns(() -> 2)
+                .caseOf(Plan).returns(node -> node.getSources().size())
+                .returnFirst();
+
+        assertMatch(sourcesNumber, new ScanNode("t"), 0);
+        assertMatch(sourcesNumber, new FilterNode(null, null), 1);
+        assertMatch(sourcesNumber, new ProjectNode(null), 1);
+        assertMatch(sourcesNumber, new JoinNode(null, null), 2);
+        assertMatch(sourcesNumber, new Exchange(null, null, null), 3);
+    }
+
+    @Test
+    void pattern_matching_for_multiple_results() {
+        //Restricting the matcher return type (here: String)
+        //also allows for easier definition of cases using predicates.
+        Matcher<List<PasswordProperty>> passwordProperties = matchFor(String.class, PasswordProperty.class)
+                .caseOf(s -> s.matches(".*?[A-Z].*")).returns(() -> has_uppercase)
+                .caseOf(s -> s.matches(".*?[a-z].*")).returns(() -> has_lowercase)
+                .caseOf(s -> s.matches(".*?[0-9].*")).returns(() -> has_digits)
+                .caseOf(s -> s.length() >= 8).returns(() -> length_at_least_8)
+                .returningAll();
+
+        assertMatch(passwordProperties, "", emptyList()); //TODO this, or noMatch?
+        assertMatch(passwordProperties, "foobar", asList(has_lowercase));
+        assertMatch(passwordProperties, "FooBar", asList(has_uppercase, has_lowercase));
+        assertMatch(passwordProperties, "1234567890", asList(has_digits, length_at_least_8));
+        assertMatch(passwordProperties,
+                "aProperPassword111", asList(has_uppercase, has_lowercase, has_digits, length_at_least_8));
+    }
+
+    enum PasswordProperty {
+        has_uppercase, has_lowercase, has_digits, length_at_least_8
     }
 
     @Test
