@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
+import static rocks.matchmaker.Extractor.assumingNullableType;
 import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.matcher;
@@ -284,13 +286,38 @@ public class MatcherTest {
     }
 
     @Test
+    void pattern_matching_for_single_result_with_captures() {
+        Capture<ScanNode> scanNode = newCapture();
+
+        Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
+                .caseOf(Join
+                        .with(probe.matching(Scan
+                                .capturedAs(scanNode)))
+                )
+                .returns(Function.identity())
+                .caseOf(Join
+                        .with(build.matching(Scan
+                                .capturedAs(scanNode)))
+                )
+                .returns(Function.identity())
+                .returnFirst();
+
+        ScanNode scan = new ScanNode("t");
+        Match<PlanNode> first = assertMatch(joinMatcher, new JoinNode(scan, null));
+        assertEquals(scan, first.capture(scanNode));
+        Match<PlanNode> second = assertMatch(joinMatcher, new JoinNode(null, scan));
+        assertEquals(scan, second.capture(scanNode));
+    }
+
+    @Test
     void null_not_matched_by_default() {
         assertNoMatch(any(), null);
         assertNoMatch(matcher(Integer.class), null);
 
         //nulls can be matched using a custom extractor for now
-        Extractor<Object> nullAcceptingExtractor = (x, captures) -> Option.of(x);
-        assertMatch(matcher(nullAcceptingExtractor), null);
+        Matcher<Object> nullAcceptingMatcher =
+                matcher(assumingNullableType(Object.class, (x, captures) -> Option.of(x)));
+        assertMatch(nullAcceptingMatcher, null);
     }
 
     private <T> Match<T> assertMatch(Matcher<T> matcher, T expectedMatch) {

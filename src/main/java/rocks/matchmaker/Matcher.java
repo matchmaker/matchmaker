@@ -1,11 +1,7 @@
 package rocks.matchmaker;
 
-import rocks.matchmaker.matching.DefaultMatchingStrategy;
-
-import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
-
-import static java.util.Collections.emptyList;
 
 public class Matcher<T> {
 
@@ -51,14 +47,9 @@ public class Matcher<T> {
      * @param <T>       type of the extracted value
      * @return
      */
-    public static <F, T> Matcher<T> matcher(Extractor.Scoped<F, T> extractor) {
-        return new Matcher<>(extractor.getScopeType(), extractor, emptyList(), null);
-    }
-
-    //TODO rethink having this method and the non-scoped extractor at all
-    //(match selectiveness? strctural matching selectivity? performance?)
-    public static <T> Matcher<T> matcher(Extractor<T> extractor) {
-        return new Matcher<>(Object.class, extractor, emptyList(), null);
+    public static <T> Matcher<T> matcher(Extractor.Scoped<?, T> extractor) {
+        Capture<T> capture = null;
+        return new Matcher<>(extractor.getScopeType(), toMatchFunction(extractor, capture), capture);
     }
 
     //This expresses the fact that Matcher is covariant on T.
@@ -70,23 +61,33 @@ public class Matcher<T> {
 
     //scopeType unused for now, but will help in debugging and structural matching later
     private final Class<?> scopeType;
-    private final Extractor<T> extractor;
-    private final List<PropertyMatcher<T, ?>> propertyMatchers;
+    private final BiFunction<Object, Captures, Match<T>> matchFunction;
     private final Capture<T> capture;
 
     //TODO think how to not have this package-private? Make Matcher an interface?
-    Matcher(Class<?> scopeType, Extractor<T> extractor, List<PropertyMatcher<T, ?>> propertyMatchers, Capture<T> capture) {
+    Matcher(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
         this.scopeType = scopeType;
-        this.extractor = extractor;
-        this.propertyMatchers = propertyMatchers;
+        this.matchFunction = matchFunction;
         this.capture = capture;
+    }
+
+    private static <T> BiFunction<Object, Captures, Match<T>> toMatchFunction(Extractor<T> extractor, Capture<T> capture) {
+        return (object, captures) -> extractor.apply(object, captures)
+                .map(value -> createMatch(capture, value, captures))
+                .orElse(Match.empty());
+    }
+
+    protected static <T> Match<T> createMatch(Capture<T> capture, T matchedValue, Captures captures) {
+        return Match.of(matchedValue, captures.addAll(Captures.ofNullable(capture, matchedValue)));
     }
 
     public Matcher<T> capturedAs(Capture<T> capture) {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
-        return new Matcher<>(scopeType, extractor, propertyMatchers, capture);
+        BiFunction<Object, Captures, Match<T>> newMatchFunction =
+                matchFunction.andThen(match -> match.flatMap(value -> createMatch(capture, value, match.captures())));
+        return new Matcher<>(scopeType, newMatchFunction, capture);
     }
 
     public Matcher<T> matching(T value) {
@@ -106,62 +107,37 @@ public class Matcher<T> {
         return with(selfPropertyMatcher);
     }
 
-    public Matcher<T> with(PropertyMatcher<? super T, ?> matcher) {
-        PropertyMatcher<T, ?> castMatcher = contravariantUpcast(matcher);
-        return new Matcher<>(scopeType, extractor, Util.append(propertyMatchers, castMatcher), capture);
+    public <R> Matcher<T> with(PropertyMatcher<? super T, R> matcher) {
+        PropertyMatcher<T, R> castMatcher = contravariantUpcast(matcher);
+        return this.flatMap((selfMatchValue, captures) -> {
+            Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);
+            Match<R> propertyMatch = propertyOption
+                    .map(value -> castMatcher.getMatcher().match(value, captures))
+                    .orElse(Match.empty());
+            return propertyMatch.map(__ -> selfMatchValue);
+        });
+    }
+
+    protected <R> Matcher<R> flatMap(BiFunction<T, Captures, Match<R>> mapper) {
+        BiFunction<Object, Captures, Match<R>> newMatchFunction = (object, captures) -> {
+            Match<T> originalMatch = matchFunction.apply(object, captures);
+            return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));
+        };
+        return new Matcher<R>(scopeType, newMatchFunction, null);
     }
 
     //this reflects the fact that PropertyMatcher<F, T> is contravariant on F
     @SuppressWarnings("unchecked cast")
-    private PropertyMatcher<T, ?> contravariantUpcast(PropertyMatcher<? super T, ?> matcher) {
-        return (PropertyMatcher<T, ?>) matcher;
+    private <R> PropertyMatcher<T, R> contravariantUpcast(PropertyMatcher<? super T, R> matcher) {
+        return (PropertyMatcher<T, R>) matcher;
     }
 
+    //Usage of this method within the library's code almost always means an error because of lost captures.
     public Match<T> match(Object object) {
         return match(object, Captures.empty());
     }
 
     public Match<T> match(Object object, Captures captures) {
-        return match(object, captures, DefaultMatchingStrategy.INSTANCE);
-    }
-
-    public Match<T> match(Object object, Captures captures, MatchingStrategy matchingStrategy) {
-        return matchingStrategy.match(this, object, captures);
-    }
-
-    /**
-     * This method produces an Internals token used to access
-     * internal properties of Matchers. The purpose of this method
-     * is to warn users that any method accepting the token and
-     * any values received from token-accepting methods is subject
-     * to change in future versions.
-     *
-     * @return Matcher.Internals access token
-     */
-    public static Internals internals() {
-        return Internals.INSTANCE;
-    }
-
-    private enum Internals {
-        INSTANCE;
-        private <T> T access(T value) {
-            return value;
-        }
-    }
-
-    public Class<?> getScopeType(Internals internals) {
-        return scopeType;
-    }
-
-    public Extractor<T> getExtractor(Internals internals) {
-        return internals.access(extractor);
-    }
-
-    public List<PropertyMatcher<T, ?>> getPropertyMatchers(Internals internals) {
-        return internals.access(propertyMatchers);
-    }
-
-    public Capture<T> getCapture(Internals internals) {
-        return internals.access(capture);
+        return matchFunction.apply(object, captures);
     }
 }
