@@ -140,4 +140,8 @@ public class Matcher<T> {
     public Match<T> match(Object object, Captures captures) {
         return matchFunction.apply(object, captures);
     }
+
+    Class<?> getScopeType() {
+        return scopeType;
+    }
 }

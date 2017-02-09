@@ -9,6 +9,7 @@ import example.ast.ScanNode;
 import example.ast.SingleSourcePlanNode;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
@@ -307,6 +308,50 @@ public class MatcherTest {
         assertEquals(scan, first.capture(scanNode));
         Match<PlanNode> second = assertMatch(joinMatcher, new JoinNode(null, scan));
         assertEquals(scan, second.capture(scanNode));
+    }
+
+    @Test
+    void should_narrow_down_tried_patterns_based_on_scope_type() {
+        List<Class<?>> matchAttempts = new ArrayList<>();
+        PatternMatch<Object, Object> patternMatch = matchFor(Object.class, Object.class)
+                .caseOf(registerMatch(Void.class, matchAttempts)).returns(Function.identity())
+                .caseOf(registerMatch(String.class, matchAttempts)).returns(Function.identity())
+                .caseOf(registerMatch(Integer.class, matchAttempts)).returns(Function.identity())
+                .caseOf(registerMatch(Number.class, matchAttempts)).returns(Function.identity())
+                .caseOf(registerMatch(Double.class, matchAttempts)).returns(Function.identity())
+                .caseOf(registerMatch(CharSequence.class, matchAttempts)).returns(Function.identity())
+                .caseOf(registerMatch(String.class, matchAttempts)).returns(Function.identity());
+
+        assertMatchAttempts(patternMatch.returnFirst(), 42, matchAttempts, Integer.class);
+        assertMatchAttempts(patternMatch.returnFirst(), 0.1, matchAttempts, Number.class);
+        assertMatchAttempts(patternMatch.returnFirst(), "foo", matchAttempts, String.class);
+        assertMatchAttempts(patternMatch.returningAll(), 42, matchAttempts, Integer.class, Number.class);
+        assertMatchAttempts(patternMatch.returningAll(), 0.1, matchAttempts, Number.class, Double.class);
+        assertMatchAttempts(patternMatch.returningAll(), "foo", matchAttempts, String.class, CharSequence.class, String.class);
+        assertMatchAttempts(patternMatch.returnFirst(), null, matchAttempts, Void.class);
+        assertMatchAttempts(patternMatch.returningAll(), null, matchAttempts,
+                Void.class, String.class, Integer.class, Number.class, Double.class, CharSequence.class, String.class);
+    }
+
+    private <T> Matcher<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
+        return matcher(new Extractor.Scoped<T, T>(scopeClass, false, null) {
+            @Override
+            public Option apply(Object x, Captures captures) {
+                matchAttemtpts.add(scopeClass);
+                return Option.of(x);
+            }
+        });
+    }
+
+    private void assertMatchAttempts(
+            Matcher<?> matcher,
+            Object matchedObject,
+            List<Class<?>> matchAttempts,
+            Class<?>... expectedMatchAttempts
+    ) {
+        matcher.match(matchedObject);
+        assertEquals(asList(expectedMatchAttempts), matchAttempts);
+        matchAttempts.clear();
     }
 
     @Test
