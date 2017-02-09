@@ -27,7 +27,7 @@ public interface Extractor<T> extends BiFunction<Object, Captures, Option<T>> {
         private final boolean rejectNulls;
         private final BiFunction<T, Captures, Option<S>> extractor;
 
-        private Scoped(Class<T> scopeType, boolean rejectNulls, BiFunction<T, Captures, Option<S>> extractor) {
+        public Scoped(Class<T> scopeType, boolean rejectNulls, BiFunction<T, Captures, Option<S>> extractor) {
             this.scopeType = scopeType;
             this.rejectNulls = rejectNulls;
             this.extractor = extractor;
