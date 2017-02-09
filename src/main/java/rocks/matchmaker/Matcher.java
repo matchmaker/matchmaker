@@ -123,7 +123,7 @@ public class Matcher<T> {
             Match<T> originalMatch = matchFunction.apply(object, captures);
             return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));
         };
-        return new Matcher<R>(scopeType, newMatchFunction, null);
+        return new Matcher<>(scopeType, newMatchFunction, null);
     }
 
     //this reflects the fact that PropertyMatcher<F, T> is contravariant on F
