@@ -1,5 +1,6 @@
 package rocks.matchmaker;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,7 @@ public class PatternMatch<T, R> {
     private Class<T> matcherResultType;
     private Class<R> caseResultType;
 
-    private Map<Matcher<? extends T>, Function<T, R>> cases = new LinkedHashMap<>();
+    private List<Matcher<R>> cases = new ArrayList<>();
 
     private PatternMatch(Class<T> matcherResultType, Class<R> caseResultType) {
         this.matcherResultType = matcherResultType;
@@ -40,7 +41,8 @@ public class PatternMatch<T, R> {
             @Override
             public PatternMatch<T, R> returns(Function<T, R> result) {
                 //TODO rewrite this so that immutable objects are used
-                PatternMatch.this.cases.put(matcher, result);
+                Matcher<R> resultMatcher = matcher.flatMap((match, captures) -> Match.of(result.apply(match), captures));
+                PatternMatch.this.cases.add(resultMatcher);
                 return PatternMatch.this;
             }
         };

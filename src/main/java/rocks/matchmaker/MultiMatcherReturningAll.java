@@ -1,23 +1,21 @@
 package rocks.matchmaker;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
 //FIXME this copies MultiMatcher a bit. Deduplicate.
-public class MultiMatcherReturningAll<T, R> extends Matcher<List<R>> {
+public class MultiMatcherReturningAll<R> extends Matcher<List<R>> {
 
-    public MultiMatcherReturningAll(Map<Matcher<? extends T>, Function<T, R>> cases) {
+    public MultiMatcherReturningAll(List<Matcher<R>> cases) {
         //TODO make this.scopeType = leastCommonSuperType(cases.keySet()*.scopeType)
-        super(Object.class, createMatchFunction(new LinkedHashMap<>(cases)), null);
+        super(Object.class, createMatchFunction(new ArrayList<>(cases)), null);
     }
 
-    private static <T, R> BiFunction<Object, Captures, Match<List<R>>> createMatchFunction(Map<Matcher<? extends T>, Function<T, R>> cases) {
+    private static <R> BiFunction<Object, Captures, Match<List<R>>> createMatchFunction(List<Matcher<R>> cases) {
         return (object, captures) -> {
             Stream<Match<R>> successfulCases = MultiMatcher.successfulCases(cases, object);
             //TODO we're losing captures here
