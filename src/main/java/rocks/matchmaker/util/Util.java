@@ -1,4 +1,4 @@
-package rocks.matchmaker;
+package rocks.matchmaker.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;

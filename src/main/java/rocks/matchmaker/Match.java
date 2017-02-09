@@ -4,7 +4,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static rocks.matchmaker.Util.checkNotNull;
+import static rocks.matchmaker.util.Util.checkNotNull;
 
 public abstract class Match<T> {
 

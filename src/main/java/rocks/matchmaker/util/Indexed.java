@@ -1,4 +1,4 @@
-package rocks.matchmaker;
+package rocks.matchmaker.util;
 
 public class Indexed<T> implements Comparable<Indexed<T>> {
 
