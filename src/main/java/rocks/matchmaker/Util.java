@@ -1,10 +1,12 @@
 package rocks.matchmaker;
 
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Util {
 
@@ -19,6 +21,10 @@ public class Util {
             throw new NullPointerException("Value cannot be null");
         }
         return value;
+    }
+
+    public static Stream<Class<?>> supertypes(Class<?> type) {
+        return TypeToken.of(type).getTypes().stream().map(TypeToken::getRawType);
     }
 
     public static void checkArgument(boolean expression, String message) {
