@@ -55,7 +55,7 @@ public class Matcher<T> {
     //This expresses the fact that Matcher is covariant on T.
     //This is saying "Matcher<? extends T> is a Matcher<T>".
     @SuppressWarnings("unchecked cast")
-    public static <T> Matcher<T> covariantUpcast(Matcher<? extends T> matcher) {
+    public static <T> Matcher<T> upcast(Matcher<? extends T> matcher) {
         return (Matcher<T>) matcher;
     }
 
@@ -108,7 +108,7 @@ public class Matcher<T> {
     }
 
     public <R> Matcher<T> with(PropertyMatcher<? super T, R> matcher) {
-        PropertyMatcher<T, R> castMatcher = contravariantUpcast(matcher);
+        PropertyMatcher<T, R> castMatcher = PropertyMatcher.upcast(matcher);
         return this.flatMap((selfMatchValue, captures) -> {
             Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);
             Match<R> propertyMatch = propertyOption
@@ -124,12 +124,6 @@ public class Matcher<T> {
             return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));
         };
         return new Matcher<>(scopeType, newMatchFunction, null);
-    }
-
-    //this reflects the fact that PropertyMatcher<F, T> is contravariant on F
-    @SuppressWarnings("unchecked cast")
-    private <R> PropertyMatcher<T, R> contravariantUpcast(PropertyMatcher<? super T, R> matcher) {
-        return (PropertyMatcher<T, R>) matcher;
     }
 
     //Usage of this method within the library's code almost always means an error because of lost captures.

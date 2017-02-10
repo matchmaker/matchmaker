@@ -12,6 +12,12 @@ public class PropertyMatcher<T, S> {
         this.matcher = matcher;
     }
 
+    //this reflects the fact that PropertyMatcher<F, T> is contravariant on F and covaraint on T
+    @SuppressWarnings("unchecked cast")
+    public static <T, R> PropertyMatcher<T, R> upcast(PropertyMatcher<? super T, ? extends R> matcher) {
+        return (PropertyMatcher<T, R>) matcher;
+    }
+
     public Function<T, Option<?>> getProperty() {
         return property;
     }
