@@ -20,7 +20,10 @@ public class Matcher<T> {
     }
 
     public static <T> Matcher<T> $(Class<T> expectedClass) {
-        return $(expectedClass, (x) -> true);
+        BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
+                .filter(expectedClass::isInstance)
+                .map(expectedClass::cast);
+        return new Matcher<>(expectedClass, matchFunction, null);
     }
 
     public static <T> Matcher<T> $(Class<T> targetClass, Predicate<T> predicate) {
