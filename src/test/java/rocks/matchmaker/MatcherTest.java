@@ -114,11 +114,11 @@ public class MatcherTest {
         Matcher<String> matcher = $(String.class)
                 .$(s -> s.startsWith("A"))
                 .$((CharSequence s) -> s.length() > 0)
-                .matching(endsWith("."))
+                .matching(endsWith("string."))
                 .matching(hasLowercaseChars.capturedAs(lowercase));
 
-        Match<String> match = assertMatch(matcher, matchedValue);
-        assertEquals(match.capture(lowercase), characters(" little string.").collect(toList()));
+        Match<String> match = assertMatch(matcher, matchedValue, "string.");
+        assertEquals(match.capture(lowercase), characters("string.").collect(toList()));
     }
 
     private Extractor.Scoped<String, String> endsWith(String suffix) {

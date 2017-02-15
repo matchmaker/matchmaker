@@ -90,11 +90,15 @@ public class Matcher<T> {
     }
 
     public Matcher<T> $(Predicate<? super T> predicate) {
-        return flatMap((value, captures) -> Match.of(value, captures).filter(predicate));
+        return flatMap((value, captures) -> Match.of(value, captures)
+                .filter(predicate));
     }
 
-    public Matcher<T> matching(Extractor.Scoped<?, T> extractor) {
-        return matching($(extractor));
+    public <R> Matcher<R> matching(Extractor.Scoped<?, R> extractor) {
+        return flatMap((value, captures) -> Match.of(value, captures)
+                        .flatMap(v -> extractor.apply(v, captures)
+                                .map(vv -> Match.of(vv, captures))
+                                .orElse(Match.empty())));
     }
 
     public <S> Matcher<T> matching(Matcher<S> matcher) {
