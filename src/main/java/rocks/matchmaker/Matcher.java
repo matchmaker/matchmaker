@@ -90,8 +90,8 @@ public class Matcher<T> {
         return new Matcher<>(scopeType, newMatchFunction, capture);
     }
 
-    public Matcher<T> matching(Class<T> scopeType, Predicate<T> predicate) {
-        return matching($(scopeType, predicate));
+    public Matcher<T> matching(Predicate<T> predicate) {
+        return new Matcher<>(scopeType, matchFunction.andThen(match -> match.filter(predicate)), capture);
     }
 
     public Matcher<T> matching(Extractor.Scoped<?, T> extractor) {
