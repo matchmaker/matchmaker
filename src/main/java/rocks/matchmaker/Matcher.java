@@ -90,7 +90,7 @@ public class Matcher<T> {
     }
 
     public Matcher<T> $(Predicate<? super T> predicate) {
-        return new Matcher<>(scopeType, matchFunction.andThen(match -> match.filter(predicate)), capture);
+        return flatMap((value, captures) -> Match.of(value, captures).filter(predicate));
     }
 
     public Matcher<T> matching(Extractor.Scoped<?, T> extractor) {
