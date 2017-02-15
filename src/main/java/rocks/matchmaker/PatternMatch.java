@@ -29,7 +29,7 @@ public class PatternMatch<T, R> {
     }
 
     public Case<T, R> caseOf(Predicate<T> predicate) {
-        return caseOf($(this.matcherResultType, predicate));
+        return caseOf($(this.matcherResultType).$(predicate));
     }
 
     //TODO add Matcher.mapping and Matcher.flatMapping and use a List<Matcher<R>> instead of the 'cases' Map

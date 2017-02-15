@@ -30,7 +30,7 @@ public interface Property<T> {
 
     //TODO make Property carry the scopeType and remove scopeType / .Scoped from methods below?
     default <S> PropertyMatcher<T, S> matching(Class<S> scopeType, Predicate<S> predicate) {
-        return matching($(scopeType, predicate));
+        return matching($(scopeType).$(predicate));
     }
 
     default <S> PropertyMatcher<T, S> matching(Extractor.Scoped<?, S> extractor) {

@@ -11,12 +11,12 @@ public class Matcher<T> {
 
     @SuppressWarnings("unchecked cast")
     public static <T> Matcher<T> isNull() {
-        return (Matcher<T>) $(Object.class, x -> x == null);
+        return (Matcher<T>) $(Object.class).$(x -> x == null);
     }
 
     public static <T> Matcher<T> equalTo(T expectedValue) {
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
-        return $(expectedClass, (x) -> x.equals(expectedValue));
+        return $(expectedClass).$(x -> x.equals(expectedValue));
     }
 
     public static <T> Matcher<T> $(Class<T> expectedClass) {
@@ -24,10 +24,6 @@ public class Matcher<T> {
                 .filter(expectedClass::isInstance)
                 .map(expectedClass::cast);
         return new Matcher<>(expectedClass, matchFunction, null);
-    }
-
-    public static <T> Matcher<T> $(Class<T> targetClass, Predicate<T> predicate) {
-        return $(Extractor.assumingType(targetClass, (x) -> Option.of(x).filter(predicate)));
     }
 
     /**

@@ -65,8 +65,8 @@ public class MatcherTest {
         assertNoMatch($(Integer.class), "John Doe");
 
         //predicate-based
-        assertMatch($(Integer.class, x -> x > 0), 42);
-        assertNoMatch($(Integer.class, x -> x > 0), -1);
+        assertMatch($(Integer.class).$(x -> x > 0), 42);
+        assertNoMatch($(Integer.class).$(x -> x > 0), -1);
     }
 
     @Test
