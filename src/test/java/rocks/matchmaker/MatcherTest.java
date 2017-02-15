@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.Extractor.assumingNullableType;
 import static rocks.matchmaker.Extractor.assumingType;
-import static rocks.matchmaker.Matcher.any;
-import static rocks.matchmaker.Matcher.matcher;
+import static rocks.matchmaker.Matcher.$;
+import static rocks.matchmaker.Matcher.isNull;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
@@ -38,16 +38,16 @@ import static rocks.matchmaker.Property.self;
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
 
-    Matcher<JoinNode> Join = matcher(JoinNode.class);
+    Matcher<JoinNode> Join = $(JoinNode.class);
 
     Property<JoinNode> probe = property(JoinNode::getProbe);
     Property<JoinNode> build = property(JoinNode::getBuild);
 
-    Matcher<PlanNode> Plan = matcher(PlanNode.class);
-    Matcher<ProjectNode> Project = matcher(ProjectNode.class);
-    Matcher<FilterNode> Filter = matcher(FilterNode.class);
+    Matcher<PlanNode> Plan = $(PlanNode.class);
+    Matcher<ProjectNode> Project = $(ProjectNode.class);
+    Matcher<FilterNode> Filter = $(FilterNode.class);
 
-    Matcher<ScanNode> Scan = matcher(ScanNode.class);
+    Matcher<ScanNode> Scan = $(ScanNode.class);
     Property<ScanNode> tableName = property(ScanNode::getTableName);
 
     Property<SingleSourcePlanNode> source = property(SingleSourcePlanNode::getSource);
@@ -56,17 +56,17 @@ public class MatcherTest {
     @Test
     void trivial_matchers() {
         //any
-        assertMatch(any(), 42);
-        assertMatch(any(), "John Doe");
+        assertMatch($(), 42);
+        assertMatch($(), "John Doe");
 
         //class based
-        assertMatch(matcher(Integer.class), 42);
-        assertMatch(matcher(Number.class), 42);
-        assertNoMatch(matcher(Integer.class), "John Doe");
+        assertMatch($(Integer.class), 42);
+        assertMatch($(Number.class), 42);
+        assertNoMatch($(Integer.class), "John Doe");
 
         //predicate-based
-        assertMatch(matcher(Integer.class, x -> x > 0), 42);
-        assertNoMatch(matcher(Integer.class, x -> x > 0), -1);
+        assertMatch($(Integer.class, x -> x > 0), 42);
+        assertNoMatch($(Integer.class, x -> x > 0), -1);
     }
 
     @Test
@@ -77,20 +77,20 @@ public class MatcherTest {
 
     @Test
     void property_matchers() {
-        Matcher<String> aString = matcher(String.class);
+        Matcher<String> aString = $(String.class);
         Property<String> length = property(String::length);
         String string = "a";
 
         assertMatch(aString.with(length.matching(1)), string);
         assertMatch(aString.with(length.matching(Integer.class, x -> x > 0)), string);
         assertMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.of(x.toString())))), string);
-        assertMatch(aString.with(length.matching(any())), string);
+        assertMatch(aString.with(length.matching($())), string);
         assertMatch(aString.with(self().matching(string)), string);
 
         assertNoMatch(aString.with(length.matching(0)), string);
         assertNoMatch(aString.with(length.matching(Integer.class, x -> x < 1)), string);
         assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
-        assertNoMatch(aString.with(length.matching(matcher(Void.class))), string);
+        assertNoMatch(aString.with(length.matching($(Void.class))), string);
         assertNoMatch(aString.with(self().matching("b")), string);
     }
 
@@ -111,7 +111,7 @@ public class MatcherTest {
 
         String matchedValue = "A little string.";
 
-        Matcher<String> matcher = matcher(String.class)
+        Matcher<String> matcher = $(String.class)
                 .matching(String.class, s -> s.startsWith("A"))
                 .matching(endsWith("."))
                 .matching(hasLowercaseChars.capturedAs(lowercase))
@@ -125,7 +125,7 @@ public class MatcherTest {
         return assumingType(String.class, string -> Option.of(suffix).filter(__ -> string.endsWith(suffix)));
     }
 
-    private Matcher<List<String>> hasLowercaseChars = matcher(assumingType(String.class, string -> {
+    private Matcher<List<String>> hasLowercaseChars = $(assumingType(String.class, string -> {
         List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
         return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
     }));
@@ -141,8 +141,8 @@ public class MatcherTest {
                         .filter(sources -> sources.size() == 1)
                         .map(sources -> sources.get(0)));
 
-        Matcher<PlanNode> planNodeWithExactlyOneSource = matcher(PlanNode.class)
-                .with(onlySource.matching(any()));
+        Matcher<PlanNode> planNodeWithExactlyOneSource = $(PlanNode.class)
+                .with(onlySource.matching($()));
 
         assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode("t")));
         assertNoMatch(planNodeWithExactlyOneSource, new ScanNode("t"));
@@ -170,7 +170,7 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = matcher(assumingType(String.class, x -> {
+        Matcher<List<String>> stringWithVowels = $(assumingType(String.class, x -> {
             List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
         }));
@@ -190,7 +190,7 @@ public class MatcherTest {
     @Test
     void no_match_means_no_captures() {
         Capture<Void> impossible = newCapture();
-        Matcher<Void> matcher = matcher(Void.class).capturedAs(impossible);
+        Matcher<Void> matcher = $(Void.class).capturedAs(impossible);
 
         Match<Void> match = matcher.match(42);
 
@@ -201,7 +201,7 @@ public class MatcherTest {
 
     @Test
     void unknown_capture_is_an_error() {
-        Matcher<?> matcher = any();
+        Matcher<?> matcher = $();
         Capture<?> unknownCapture = newCapture();
 
         Match<?> match = matcher.match(42);
@@ -219,7 +219,7 @@ public class MatcherTest {
         Capture<ScanNode> right = newCapture();
         Capture<List<PlanNode>> caputres = newCapture();
 
-        Matcher<List<PlanNode>> accessingTheDesiredCaptures = matcher(assumingType(PlanNode.class, (node, params) ->
+        Matcher<List<PlanNode>> accessingTheDesiredCaptures = $(assumingType(PlanNode.class, (node, params) ->
                 Option.of(asList(
                         params.get(left), params.get(right), params.get(root), params.get(parent)
                 )))
@@ -334,7 +334,7 @@ public class MatcherTest {
     }
 
     private <T> Matcher<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
-        return matcher(new Extractor.Scoped<T, T>(scopeClass, false, null) {
+        return $(new Extractor.Scoped<T, T>(scopeClass, false, null) {
             @Override
             public Option apply(Object x, Captures captures) {
                 matchAttemtpts.add(scopeClass);
@@ -356,12 +356,12 @@ public class MatcherTest {
 
     @Test
     void null_not_matched_by_default() {
-        assertNoMatch(any(), null);
-        assertNoMatch(matcher(Integer.class), null);
+        assertNoMatch($(), null);
+        assertNoMatch($(Integer.class), null);
 
         //nulls can be matched using a custom extractor for now
         Matcher<Object> nullAcceptingMatcher =
-                matcher(assumingNullableType(Object.class, (x, captures) -> Option.of(x)));
+                $(assumingNullableType(Object.class, (x, captures) -> Option.of(x)));
         assertMatch(nullAcceptingMatcher, null);
     }
 

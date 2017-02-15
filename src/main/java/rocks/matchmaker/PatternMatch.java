@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static rocks.matchmaker.Matcher.matcher;
+import static rocks.matchmaker.Matcher.$;
 
 public class PatternMatch<T, R> {
 
@@ -29,7 +29,7 @@ public class PatternMatch<T, R> {
     }
 
     public Case<T, R> caseOf(Predicate<T> predicate) {
-        return caseOf(matcher(this.matcherResultType, predicate));
+        return caseOf($(this.matcherResultType, predicate));
     }
 
     //TODO add Matcher.mapping and Matcher.flatMapping and use a List<Matcher<R>> instead of the 'cases' Map
@@ -55,7 +55,7 @@ public class PatternMatch<T, R> {
     }
 
     public Matcher<Object> nullableAny() {
-        return matcher(Extractor.assumingNullableType(Object.class, Option::of));
+        return $(Extractor.assumingNullableType(Object.class, Option::of));
     }
 
     public interface Case<T, R> {

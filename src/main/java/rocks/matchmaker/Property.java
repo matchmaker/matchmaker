@@ -3,7 +3,7 @@ package rocks.matchmaker;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static rocks.matchmaker.Matcher.matcher;
+import static rocks.matchmaker.Matcher.$;
 
 public interface Property<T> {
 
@@ -30,11 +30,11 @@ public interface Property<T> {
 
     //TODO make Property carry the scopeType and remove scopeType / .Scoped from methods below?
     default <S> PropertyMatcher<T, S> matching(Class<S> scopeType, Predicate<S> predicate) {
-        return matching(matcher(scopeType, predicate));
+        return matching($(scopeType, predicate));
     }
 
     default <S> PropertyMatcher<T, S> matching(Extractor.Scoped<?, S> extractor) {
-        return matching(matcher(extractor));
+        return matching($(extractor));
     }
 
     <S> PropertyMatcher<T, S> matching(Matcher<S> matcher);

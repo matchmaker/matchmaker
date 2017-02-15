@@ -5,26 +5,26 @@ import java.util.function.Predicate;
 
 public class Matcher<T> {
 
-    public static Matcher<Object> any() {
-        return matcher(Object.class);
+    public static Matcher<Object> $() {
+        return $(Object.class);
     }
 
     @SuppressWarnings("unchecked cast")
     public static <T> Matcher<T> isNull() {
-        return (Matcher<T>) matcher(Object.class, x -> x == null);
+        return (Matcher<T>) $(Object.class, x -> x == null);
     }
 
     public static <T> Matcher<T> equalTo(T expectedValue) {
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
-        return matcher(expectedClass, (x) -> x.equals(expectedValue));
+        return $(expectedClass, (x) -> x.equals(expectedValue));
     }
 
-    public static <T> Matcher<T> matcher(Class<T> expectedClass) {
-        return matcher(expectedClass, (x) -> true);
+    public static <T> Matcher<T> $(Class<T> expectedClass) {
+        return $(expectedClass, (x) -> true);
     }
 
-    public static <T> Matcher<T> matcher(Class<T> targetClass, Predicate<T> predicate) {
-        return matcher(Extractor.assumingType(targetClass, (x) -> Option.of(x).filter(predicate)));
+    public static <T> Matcher<T> $(Class<T> targetClass, Predicate<T> predicate) {
+        return $(Extractor.assumingType(targetClass, (x) -> Option.of(x).filter(predicate)));
     }
 
     /**
@@ -47,7 +47,7 @@ public class Matcher<T> {
      * @param <T>       type of the extracted value
      * @return
      */
-    public static <T> Matcher<T> matcher(Extractor.Scoped<?, T> extractor) {
+    public static <T> Matcher<T> $(Extractor.Scoped<?, T> extractor) {
         Capture<T> capture = null;
         return new Matcher<>(extractor.getScopeType(), toMatchFunction(extractor, capture), capture);
     }
@@ -95,11 +95,11 @@ public class Matcher<T> {
     }
 
     public Matcher<T> matching(Class<T> scopeType, Predicate<T> predicate) {
-        return matching(matcher(scopeType, predicate));
+        return matching($(scopeType, predicate));
     }
 
     public Matcher<T> matching(Extractor.Scoped<?, T> extractor) {
-        return matching(matcher(extractor));
+        return matching($(extractor));
     }
 
     public <S> Matcher<T> matching(Matcher<S> matcher) {
