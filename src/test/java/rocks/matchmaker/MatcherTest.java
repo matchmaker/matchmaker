@@ -311,7 +311,7 @@ public class MatcherTest {
     }
 
     @Test
-    void should_narrow_down_tried_patterns_based_on_scope_type() {
+    void narrows_down_tried_patterns_based_on_scope_type() {
         List<Class<?>> matchAttempts = new ArrayList<>();
         PatternMatch<Object, Object> patternMatch = matchFor(Object.class, Object.class)
                 .caseOf(registerMatch(Void.class, matchAttempts)).returns(Function.identity())

@@ -4,7 +4,6 @@ import com.google.common.collect.SortedSetMultimap;
 import rocks.matchmaker.util.Indexed;
 import rocks.matchmaker.util.Util;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
@@ -14,15 +13,12 @@ import java.util.stream.Stream;
 
 import static com.google.common.collect.Multimaps.newSortedSetMultimap;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
+import static rocks.matchmaker.Matcher.createMatch;
 
-public class MultiMatcher<R> extends Matcher<R> {
+public class MultiMatcherExtractors {
 
-    public MultiMatcher(List<Matcher<R>> cases) {
-        //TODO make this.scopeType = leastCommonSuperType(cases.keySet()*.scopeType)
-        super(Object.class, createMatchFunction(new ArrayList<>(cases)), null);
-    }
-
-    private static <R> BiFunction<Object, Captures, Match<R>> createMatchFunction(List<Matcher<R>> cases) {
+    static <R> BiFunction<Object, Captures, Match<R>> returnFirst(List<Matcher<R>> cases) {
         SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> matchersByScopeType = indexByScopeType(cases);
         return (object, captures) -> {
             Stream<Match<R>> successfulCases = successfulCases(cases, matchersByScopeType, object);
@@ -30,7 +26,27 @@ public class MultiMatcher<R> extends Matcher<R> {
         };
     }
 
-    static <R> Stream<Match<R>> successfulCases(
+    static <R> BiFunction<Object, Captures, Match<List<R>>> returnAll(List<Matcher<R>> cases) {
+        SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> matchersByScopeType = indexByScopeType(cases);
+        return (object, captures) -> {
+            Stream<Match<R>> successfulCases = successfulCases(cases, matchersByScopeType, object);
+            //TODO we're losing captures here
+            List<R> allMatches = successfulCases.map(Match::value).collect(toList());
+            return Match.of(allMatches, captures)
+                    .flatMap(value -> createMatch(null, allMatches, captures));
+        };
+    }
+
+    private static <R> SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> indexByScopeType(List<Matcher<R>> cases) {
+        SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> matchersByScopeType =
+                newSortedSetMultimap(new HashMap<>(), TreeSet::new);
+        AtomicInteger i = new AtomicInteger();
+        Stream<Indexed<Matcher<R>>> indexedMatchers = cases.stream().map(c -> Indexed.at(i.getAndIncrement(), c));
+        indexedMatchers.forEach(matcher -> matchersByScopeType.put(matcher.value().getScopeType(), matcher));
+        return matchersByScopeType;
+    }
+
+    private static <R> Stream<Match<R>> successfulCases(
             List<Matcher<R>> cases,
             SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> matchersByScopeType,
             Object object
@@ -56,14 +72,5 @@ public class MultiMatcher<R> extends Matcher<R> {
             return indexedMatchersInOrder.stream()
                     .map(Indexed::value);
         }
-    }
-
-    static <R> SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> indexByScopeType(List<Matcher<R>> cases) {
-        SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> matchersByScopeType =
-                newSortedSetMultimap(new HashMap<>(), TreeSet::new);
-        AtomicInteger i = new AtomicInteger();
-        Stream<Indexed<Matcher<R>>> indexedMatchers = cases.stream().map(c -> Indexed.at(i.getAndIncrement(), c));
-        indexedMatchers.forEach(matcher -> matchersByScopeType.put(matcher.value().getScopeType(), matcher));
-        return matchersByScopeType;
     }
 }

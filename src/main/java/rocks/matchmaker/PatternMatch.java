@@ -1,9 +1,7 @@
 package rocks.matchmaker;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -49,11 +47,15 @@ public class PatternMatch<T, R> {
     }
 
     public Matcher<R> returnFirst() {
-        return new MultiMatcher<>(cases);
+        return nullableAny().flatMap(MultiMatcherExtractors.returnFirst(cases));
     }
 
     public Matcher<List<R>> returningAll() {
-        return new MultiMatcherReturningAll<>(cases);
+        return nullableAny().flatMap(MultiMatcherExtractors.returnAll(cases));
+    }
+
+    public Matcher<Object> nullableAny() {
+        return matcher(Extractor.assumingNullableType(Object.class, Option::of));
     }
 
     public interface Case<T, R> {
