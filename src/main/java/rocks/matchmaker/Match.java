@@ -25,7 +25,7 @@ public abstract class Match<T> {
         return new Match.Empty<>();
     }
 
-    public abstract Match<T> filter(Predicate<T> predicate);
+    public abstract Match<T> filter(Predicate<? super T> predicate);
 
     public abstract <U> Match<U> map(Function<? super T, ? extends U> mapper);
 
@@ -58,7 +58,7 @@ public abstract class Match<T> {
         }
 
         @Override
-        public Match<T> filter(Predicate<T> predicate) {
+        public Match<T> filter(Predicate<? super T> predicate) {
             return predicate.test(value) ? this : empty();
         }
 
@@ -117,7 +117,7 @@ public abstract class Match<T> {
         }
 
         @Override
-        public Match<T> filter(Predicate<T> predicate) {
+        public Match<T> filter(Predicate<? super T> predicate) {
             return this;
         }
 
