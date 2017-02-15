@@ -90,7 +90,7 @@ public class Matcher<T> {
         return new Matcher<>(scopeType, newMatchFunction, capture);
     }
 
-    public Matcher<T> matching(Predicate<? super T> predicate) {
+    public Matcher<T> $(Predicate<? super T> predicate) {
         return new Matcher<>(scopeType, matchFunction.andThen(match -> match.filter(predicate)), capture);
     }
 

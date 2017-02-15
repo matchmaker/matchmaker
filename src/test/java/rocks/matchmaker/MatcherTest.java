@@ -112,8 +112,8 @@ public class MatcherTest {
         String matchedValue = "A little string.";
 
         Matcher<String> matcher = $(String.class)
-                .matching(s -> s.startsWith("A"))
-                .matching((CharSequence s) -> s.length() > 0)
+                .$(s -> s.startsWith("A"))
+                .$((CharSequence s) -> s.length() > 0)
                 .matching(endsWith("."))
                 .matching(hasLowercaseChars.capturedAs(lowercase));
 
