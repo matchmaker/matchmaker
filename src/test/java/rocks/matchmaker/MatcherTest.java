@@ -113,6 +113,7 @@ public class MatcherTest {
 
         Matcher<String> matcher = $(String.class)
                 .matching(s -> s.startsWith("A"))
+                .matching((CharSequence s) -> s.length() > 0)
                 .matching(endsWith("."))
                 .matching(hasLowercaseChars.capturedAs(lowercase));
 
