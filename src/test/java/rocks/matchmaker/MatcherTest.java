@@ -114,8 +114,7 @@ public class MatcherTest {
         Matcher<String> matcher = $(String.class)
                 .matching(String.class, s -> s.startsWith("A"))
                 .matching(endsWith("."))
-                .matching(hasLowercaseChars.capturedAs(lowercase))
-                .matching(matchedValue);
+                .matching(hasLowercaseChars.capturedAs(lowercase));
 
         Match<String> match = assertMatch(matcher, matchedValue);
         assertEquals(match.capture(lowercase), characters(" little string.").collect(toList()));

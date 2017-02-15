@@ -90,10 +90,6 @@ public class Matcher<T> {
         return new Matcher<>(scopeType, newMatchFunction, capture);
     }
 
-    public Matcher<T> matching(T value) {
-        return matching(equalTo(value));
-    }
-
     public Matcher<T> matching(Class<T> scopeType, Predicate<T> predicate) {
         return matching($(scopeType, predicate));
     }
