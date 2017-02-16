@@ -122,8 +122,8 @@ public class MatcherTest {
         Matcher<List<String>> matcher = $(String.class)
                 .$(s -> s.startsWith("A"))
                 .$((CharSequence s) -> s.length() > 0)
-                .$(endsWith("string."))
-                .$(hasLowercaseChars.as(lowercase));
+                .$$(endsWith("string."))
+                .$$(hasLowercaseChars.as(lowercase));
 
         List<String> lowercaseChars = characters("string.").collect(toList());
         Match<List<String>> match = assertMatch(matcher, matchedValue, lowercaseChars);
@@ -134,7 +134,7 @@ public class MatcherTest {
         return (string, captures) -> Option.of(suffix).filter(__ -> string.endsWith(suffix));
     }
 
-    private Matcher<List<String>> hasLowercaseChars = $(String.class).$((string, captures) -> {
+    private Matcher<List<String>> hasLowercaseChars = $(String.class).$$((string, captures) -> {
         List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
         return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
     });
@@ -179,7 +179,7 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = $(String.class).$((x, captures) -> {
+        Matcher<List<String>> stringWithVowels = $(String.class).$$((x, captures) -> {
             List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
         });
@@ -228,7 +228,7 @@ public class MatcherTest {
         Capture<ScanNode> right = newCapture();
         Capture<List<PlanNode>> caputres = newCapture();
 
-        Matcher<List<PlanNode>> accessingTheDesiredCaptures = $(PlanNode.class).$((node, params) ->
+        Matcher<List<PlanNode>> accessingTheDesiredCaptures = $(PlanNode.class).$$((node, params) ->
                 Option.of(asList(
                         params.get(left), params.get(right), params.get(root), params.get(parent)
                 )));
@@ -238,7 +238,7 @@ public class MatcherTest {
                         .$(probe.matching(Scan.as(left)))
                         .$(build.matching(Scan.as(right)))))
                 .$(build.matching(Scan
-                        .$(accessingTheDesiredCaptures.as(caputres))));
+                        .$$(accessingTheDesiredCaptures.as(caputres))));
 
         ScanNode expectedLeft = new ScanNode("a");
         ScanNode expectedRight = new ScanNode("b");
@@ -342,7 +342,7 @@ public class MatcherTest {
     }
 
     private <T> Matcher<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
-        return nullable(scopeClass).$((x, captures) -> {
+        return nullable(scopeClass).$$((x, captures) -> {
             matchAttemtpts.add(scopeClass);
             return Option.of(x);
         });

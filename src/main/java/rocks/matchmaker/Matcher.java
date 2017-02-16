@@ -94,14 +94,14 @@ public class Matcher<T> {
      * @param <R>       type of the extracted value
      * @return
      */
-    public <R> Matcher<R> $(Extractor<T, R> extractor) {
+    public <R> Matcher<R> $$(Extractor<T, R> extractor) {
         return flatMap((value, captures) -> Match.of(value, captures)
                         .flatMap(v -> extractor.apply(v, captures)
                                 .map(vv -> Match.of(vv, captures))
                                 .orElse(Match.empty())));
     }
 
-    public <S> Matcher<S> $(Matcher<S> matcher) {
+    public <R> Matcher<R> $$(Matcher<R> matcher) {
         return flatMap(matcher.matchFunction);
     }
 
