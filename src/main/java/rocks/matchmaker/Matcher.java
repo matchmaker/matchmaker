@@ -101,9 +101,8 @@ public class Matcher<T> {
                                 .orElse(Match.empty())));
     }
 
-    public <S> Matcher<T> matching(Matcher<S> matcher) {
-        PropertyMatcher<T, S> selfPropertyMatcher = new PropertyMatcher<>(Option::of, matcher);
-        return with(selfPropertyMatcher);
+    public <S> Matcher<S> matching(Matcher<S> matcher) {
+        return flatMap(matcher.matchFunction);
     }
 
     public <R> Matcher<T> with(PropertyMatcher<? super T, R> matcher) {
@@ -117,7 +116,7 @@ public class Matcher<T> {
         });
     }
 
-    protected <R> Matcher<R> flatMap(BiFunction<T, Captures, Match<R>> mapper) {
+    protected <R> Matcher<R> flatMap(BiFunction<? super T, Captures, Match<R>> mapper) {
         BiFunction<Object, Captures, Match<R>> newMatchFunction = (object, captures) -> {
             Match<T> originalMatch = matchFunction.apply(object, captures);
             return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));

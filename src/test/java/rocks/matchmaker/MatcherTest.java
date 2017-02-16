@@ -119,14 +119,15 @@ public class MatcherTest {
 
         String matchedValue = "A little string.";
 
-        Matcher<String> matcher = $(String.class)
+        Matcher<List<String>> matcher = $(String.class)
                 .$(s -> s.startsWith("A"))
                 .$((CharSequence s) -> s.length() > 0)
                 .$(endsWith("string."))
                 .matching(hasLowercaseChars.capturedAs(lowercase));
 
-        Match<String> match = assertMatch(matcher, matchedValue, "string.");
-        assertEquals(match.capture(lowercase), characters("string.").collect(toList()));
+        List<String> lowercaseChars = characters("string.").collect(toList());
+        Match<List<String>> match = assertMatch(matcher, matchedValue, lowercaseChars);
+        assertEquals(match.capture(lowercase), lowercaseChars);
     }
 
     private Extractor<String, String> endsWith(String suffix) {
