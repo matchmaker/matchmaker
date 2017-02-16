@@ -22,10 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
-import static rocks.matchmaker.Extractor.assumingNullableType;
 import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.$;
 import static rocks.matchmaker.Matcher.isNull;
+import static rocks.matchmaker.Matcher.nullable;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
@@ -359,10 +359,21 @@ public class MatcherTest {
         assertNoMatch($(), null);
         assertNoMatch($(Integer.class), null);
 
-        //nulls can be matched using a custom extractor for now
-        Matcher<Object> nullAcceptingMatcher =
-                $(assumingNullableType(Object.class, (x, captures) -> Option.of(x)));
-        assertMatch(nullAcceptingMatcher, null);
+        //the predefined isNull matcher works as expected:
+        assertMatch(isNull(), null);
+        assertNoMatch(isNull(), 42);
+
+        //nulls can be matched using the `nullable` matcher factory method as a  starting point
+        assertMatch(nullable(Integer.class), null);
+        assertMatch(nullable(Integer.class), 42);
+
+        //the nullable matchers work as expected when chained with predicates
+        assertMatch(nullable(String.class).$(value -> "John Doe".equals(value)), "John Doe");
+        assertNoMatch(nullable(String.class).$(value -> "John Doe".equals(value)), null);
+
+        //one has to be careful when basing off nullable matchers
+        assertThrows(NullPointerException.class, () ->
+                assertMatch(nullable(String.class).$(x -> x.length() > 0), null));
     }
 
     private <T> Match<T> assertMatch(Matcher<T> matcher, T expectedMatch) {

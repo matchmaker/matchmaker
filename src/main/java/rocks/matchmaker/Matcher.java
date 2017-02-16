@@ -1,5 +1,6 @@
 package rocks.matchmaker;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -10,10 +11,6 @@ public class Matcher<T> {
     }
 
     @SuppressWarnings("unchecked cast")
-    public static <T> Matcher<T> isNull() {
-        return (Matcher<T>) $(Object.class).$(x -> x == null);
-    }
-
     public static <T> Matcher<T> equalTo(T expectedValue) {
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
         return $(expectedClass).$(x -> x.equals(expectedValue));
@@ -22,6 +19,18 @@ public class Matcher<T> {
     public static <T> Matcher<T> $(Class<T> expectedClass) {
         BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
                 .filter(expectedClass::isInstance)
+                .map(expectedClass::cast);
+        return new Matcher<>(expectedClass, matchFunction, null);
+    }
+
+    @SuppressWarnings("unchecked cast")
+    public static <T> Matcher<T> isNull() {
+        return (Matcher<T>) nullable(Object.class).$(Objects::isNull);
+    }
+
+    public static <T> Matcher<T> nullable(Class<T> expectedClass) {
+        BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
+                .filter(value -> value == null || expectedClass.isInstance(value))
                 .map(expectedClass::cast);
         return new Matcher<>(expectedClass, matchFunction, null);
     }
