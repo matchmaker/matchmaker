@@ -123,7 +123,7 @@ public class MatcherTest {
                 .$(s -> s.startsWith("A"))
                 .$((CharSequence s) -> s.length() > 0)
                 .$(endsWith("string."))
-                .$(hasLowercaseChars.capturedAs(lowercase));
+                .$(hasLowercaseChars.as(lowercase));
 
         List<String> lowercaseChars = characters("string.").collect(toList());
         Match<List<String>> match = assertMatch(matcher, matchedValue, lowercaseChars);
@@ -164,8 +164,8 @@ public class MatcherTest {
         Capture<ScanNode> scan = newCapture();
 
         Matcher<ProjectNode> matcher = Project
-                .$(source.matching(Filter.capturedAs(filter)
-                        .$(source.matching(Scan.capturedAs(scan)
+                .$(source.matching(Filter.as(filter)
+                        .$(source.matching(Scan.as(scan)
                                 .$(tableName.equalTo("orders"))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
@@ -186,7 +186,7 @@ public class MatcherTest {
 
         Capture<List<String>> vowels = newCapture();
 
-        Match<List<String>> match = assertMatch(stringWithVowels.capturedAs(vowels), "John Doe", asList("o", "o", "e"));
+        Match<List<String>> match = assertMatch(stringWithVowels.as(vowels), "John Doe", asList("o", "o", "e"));
         assertEquals(match.value(), match.capture(vowels));
 
         assertNoMatch(stringWithVowels, "pqrst");
@@ -199,7 +199,7 @@ public class MatcherTest {
     @Test
     void no_match_means_no_captures() {
         Capture<Void> impossible = newCapture();
-        Matcher<Void> matcher = $(Void.class).capturedAs(impossible);
+        Matcher<Void> matcher = $(Void.class).as(impossible);
 
         Match<Void> match = matcher.match(42);
 
@@ -233,12 +233,12 @@ public class MatcherTest {
                         params.get(left), params.get(right), params.get(root), params.get(parent)
                 )));
 
-        Matcher<JoinNode> matcher = Join.capturedAs(root)
-                .$(probe.matching(Join.capturedAs(parent)
-                        .$(probe.matching(Scan.capturedAs(left)))
-                        .$(build.matching(Scan.capturedAs(right)))))
+        Matcher<JoinNode> matcher = Join.as(root)
+                .$(probe.matching(Join.as(parent)
+                        .$(probe.matching(Scan.as(left)))
+                        .$(build.matching(Scan.as(right)))))
                 .$(build.matching(Scan
-                        .$(accessingTheDesiredCaptures.capturedAs(caputres))));
+                        .$(accessingTheDesiredCaptures.as(caputres))));
 
         ScanNode expectedLeft = new ScanNode("a");
         ScanNode expectedRight = new ScanNode("b");
@@ -301,12 +301,12 @@ public class MatcherTest {
         Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
                 .caseOf(Join
                         .$(probe.matching(Scan
-                                .capturedAs(scanNode)))
+                                .as(scanNode)))
                 )
                 .returns(Function.identity())
                 .caseOf(Join
                         .$(build.matching(Scan
-                                .capturedAs(scanNode)))
+                                .as(scanNode)))
                 )
                 .returns(Function.identity())
                 .returnFirst();

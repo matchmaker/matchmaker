@@ -60,7 +60,7 @@ public class Matcher<T> {
         return Match.of(matchedValue, captures.addAll(Captures.ofNullable(capture, matchedValue)));
     }
 
-    public Matcher<T> capturedAs(Capture<T> capture) {
+    public Matcher<T> as(Capture<T> capture) {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
