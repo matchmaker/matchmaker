@@ -10,7 +10,6 @@ public class Matcher<T> {
         return $(Object.class);
     }
 
-    @SuppressWarnings("unchecked cast")
     public static <T> Matcher<T> equalTo(T expectedValue) {
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
         return $(expectedClass).$(x -> x.equals(expectedValue));
