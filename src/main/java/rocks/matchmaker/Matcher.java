@@ -105,7 +105,7 @@ public class Matcher<T> {
         return flatMap(matcher.matchFunction);
     }
 
-    public <R> Matcher<T> with(PropertyMatcher<? super T, R> matcher) {
+    public <R> Matcher<T> $(PropertyMatcher<? super T, R> matcher) {
         PropertyMatcher<T, R> castMatcher = PropertyMatcher.upcast(matcher);
         return this.flatMap((selfMatchValue, captures) -> {
             Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);

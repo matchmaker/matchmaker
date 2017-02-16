@@ -89,23 +89,23 @@ public class MatcherTest {
         Property<String> length = property(String::length);
         String string = "a";
 
-        assertMatch(aString.with(length.equalTo(1)), string);
-        assertMatch(aString.with(length.matching(Integer.class, x -> x > 0)), string);
+        assertMatch(aString.$(length.equalTo(1)), string);
+        assertMatch(aString.$(length.matching(Integer.class, x -> x > 0)), string);
 //        assertMatch(aString.with(length.matching(Extractor.assumingType(Integer.class, x -> Option.of(x.toString())))), string);
-        assertMatch(aString.with(length.matching($())), string);
-        assertMatch(aString.with(self().equalTo(string)), string);
+        assertMatch(aString.$(length.matching($())), string);
+        assertMatch(aString.$(self().equalTo(string)), string);
 
-        assertNoMatch(aString.with(length.equalTo(0)), string);
-        assertNoMatch(aString.with(length.matching(Integer.class, x -> x < 1)), string);
+        assertNoMatch(aString.$(length.equalTo(0)), string);
+        assertNoMatch(aString.$(length.matching(Integer.class, x -> x < 1)), string);
 //        assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
-        assertNoMatch(aString.with(length.matching($(Void.class))), string);
-        assertNoMatch(aString.with(self().equalTo("b")), string);
+        assertNoMatch(aString.$(length.matching($(Void.class))), string);
+        assertNoMatch(aString.$(self().equalTo("b")), string);
     }
 
     @Test
     void match_nested_properties() {
         Matcher<ProjectNode> matcher = Project
-                .with(property(ProjectNode::getSource).matching(Scan));
+                .$(property(ProjectNode::getSource).matching(Scan));
 
         assertMatch(matcher, new ProjectNode(new ScanNode("t")));
         assertNoMatch(matcher, new ScanNode("t"));
@@ -151,7 +151,7 @@ public class MatcherTest {
                         .map(sources -> sources.get(0)));
 
         Matcher<PlanNode> planNodeWithExactlyOneSource = $(PlanNode.class)
-                .with(onlySource.matching($()));
+                .$(onlySource.matching($()));
 
         assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode("t")));
         assertNoMatch(planNodeWithExactlyOneSource, new ScanNode("t"));
@@ -164,9 +164,9 @@ public class MatcherTest {
         Capture<ScanNode> scan = newCapture();
 
         Matcher<ProjectNode> matcher = Project
-                .with(source.matching(Filter.capturedAs(filter)
-                        .with(source.matching(Scan.capturedAs(scan)
-                                .with(tableName.equalTo("orders"))))));
+                .$(source.matching(Filter.capturedAs(filter)
+                        .$(source.matching(Scan.capturedAs(scan)
+                                .$(tableName.equalTo("orders"))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 
@@ -234,10 +234,10 @@ public class MatcherTest {
                 )));
 
         Matcher<JoinNode> matcher = Join.capturedAs(root)
-                .with(probe.matching(Join.capturedAs(parent)
-                        .with(probe.matching(Scan.capturedAs(left)))
-                        .with(build.matching(Scan.capturedAs(right)))))
-                .with(build.matching(Scan
+                .$(probe.matching(Join.capturedAs(parent)
+                        .$(probe.matching(Scan.capturedAs(left)))
+                        .$(build.matching(Scan.capturedAs(right)))))
+                .$(build.matching(Scan
                         .$(accessingTheDesiredCaptures.capturedAs(caputres))));
 
         ScanNode expectedLeft = new ScanNode("a");
@@ -300,12 +300,12 @@ public class MatcherTest {
 
         Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
                 .caseOf(Join
-                        .with(probe.matching(Scan
+                        .$(probe.matching(Scan
                                 .capturedAs(scanNode)))
                 )
                 .returns(Function.identity())
                 .caseOf(Join
-                        .with(build.matching(Scan
+                        .$(build.matching(Scan
                                 .capturedAs(scanNode)))
                 )
                 .returns(Function.identity())
