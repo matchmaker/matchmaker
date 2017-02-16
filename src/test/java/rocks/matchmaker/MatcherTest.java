@@ -40,17 +40,17 @@ public class MatcherTest {
 
     Matcher<JoinNode> Join = $(JoinNode.class);
 
-    Property<JoinNode> probe = property(JoinNode::getProbe);
-    Property<JoinNode> build = property(JoinNode::getBuild);
+    Property<JoinNode, PlanNode> probe = property(JoinNode::getProbe);
+    Property<JoinNode, PlanNode> build = property(JoinNode::getBuild);
 
     Matcher<PlanNode> Plan = $(PlanNode.class);
     Matcher<ProjectNode> Project = $(ProjectNode.class);
     Matcher<FilterNode> Filter = $(FilterNode.class);
 
     Matcher<ScanNode> Scan = $(ScanNode.class);
-    Property<ScanNode> tableName = property(ScanNode::getTableName);
+    Property<ScanNode, String> tableName = property(ScanNode::getTableName);
 
-    Property<SingleSourcePlanNode> source = property(SingleSourcePlanNode::getSource);
+    Property<SingleSourcePlanNode, PlanNode> source = property(SingleSourcePlanNode::getSource);
 
 
     @Test
@@ -86,7 +86,7 @@ public class MatcherTest {
     @Test
     void property_matchers() {
         Matcher<String> aString = $(String.class);
-        Property<String> length = property(String::length);
+        Property<String, Integer> length = property(String::length);
         String string = "a";
 
         assertMatch(aString.$(length.equalTo(1)), string);
@@ -145,7 +145,7 @@ public class MatcherTest {
 
     @Test
     void optional_properties() {
-        Property<PlanNode> onlySource = optionalProperty(node ->
+        Property<PlanNode, PlanNode> onlySource = optionalProperty(node ->
                 Option.of(node.getSources())
                         .filter(sources -> sources.size() == 1)
                         .map(sources -> sources.get(0)));

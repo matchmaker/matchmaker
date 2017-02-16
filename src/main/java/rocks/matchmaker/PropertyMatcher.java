@@ -7,7 +7,7 @@ public class PropertyMatcher<T, S> {
     private final Function<T, Option<?>> property;
     private final Matcher<S> matcher;
 
-    public PropertyMatcher(Function<T, Option<?>> property, Matcher<S> matcher) {
+    private PropertyMatcher(Function<T, Option<?>> property, Matcher<S> matcher) {
         this.property = property;
         this.matcher = matcher;
     }
@@ -24,5 +24,10 @@ public class PropertyMatcher<T, S> {
 
     public Matcher<S> getMatcher() {
         return matcher;
+    }
+
+    public static <F, T, R> PropertyMatcher<F, R> of(Function<F, Option<T>> property, Matcher<R> matcher) {
+        //without the ::apply below, the type system is unable to drop the T type from Option
+        return new PropertyMatcher<>(property::apply, matcher);
     }
 }
