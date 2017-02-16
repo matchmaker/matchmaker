@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.Matcher.$;
+import static rocks.matchmaker.Matcher.equalTo;
 import static rocks.matchmaker.Matcher.isNull;
 import static rocks.matchmaker.Matcher.nullable;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
@@ -57,6 +58,14 @@ public class MatcherTest {
         //any
         assertMatch($(), 42);
         assertMatch($(), "John Doe");
+
+        //equalTo
+        Matcher<Integer> theAnswer = equalTo(42);
+        assertMatch(theAnswer, 42);
+        assertNoMatch(theAnswer, 44);
+        assertNoMatch(theAnswer, null); //no exception thrown
+        Throwable throwable = assertThrows(IllegalArgumentException.class, () -> equalTo(null));
+        assertTrue(throwable.getMessage().contains("Use `Matcher.isNull()` instead"));
 
         //class based
         assertMatch($(Integer.class), 42);

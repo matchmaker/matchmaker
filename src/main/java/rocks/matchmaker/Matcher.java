@@ -1,5 +1,7 @@
 package rocks.matchmaker;
 
+import rocks.matchmaker.util.Util;
+
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -11,6 +13,7 @@ public class Matcher<T> {
     }
 
     public static <T> Matcher<T> equalTo(T expectedValue) {
+        Util.checkArgument(expectedValue != null, "expectedValue can't be null. Use `Matcher.isNull()` instead");
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
         return $(expectedClass).$(x -> x.equals(expectedValue));
     }
