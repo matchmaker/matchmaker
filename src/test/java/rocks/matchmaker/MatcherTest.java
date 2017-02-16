@@ -81,17 +81,17 @@ public class MatcherTest {
         Property<String> length = property(String::length);
         String string = "a";
 
-        assertMatch(aString.with(length.matching(1)), string);
+        assertMatch(aString.with(length.equalTo(1)), string);
         assertMatch(aString.with(length.matching(Integer.class, x -> x > 0)), string);
         assertMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.of(x.toString())))), string);
         assertMatch(aString.with(length.matching($())), string);
-        assertMatch(aString.with(self().matching(string)), string);
+        assertMatch(aString.with(self().equalTo(string)), string);
 
-        assertNoMatch(aString.with(length.matching(0)), string);
+        assertNoMatch(aString.with(length.equalTo(0)), string);
         assertNoMatch(aString.with(length.matching(Integer.class, x -> x < 1)), string);
         assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
         assertNoMatch(aString.with(length.matching($(Void.class))), string);
-        assertNoMatch(aString.with(self().matching("b")), string);
+        assertNoMatch(aString.with(self().equalTo("b")), string);
     }
 
     @Test
@@ -157,7 +157,7 @@ public class MatcherTest {
         Matcher<ProjectNode> matcher = Project
                 .with(source.matching(Filter.capturedAs(filter)
                         .with(source.matching(Scan.capturedAs(scan)
-                                .with(tableName.matching("orders"))))));
+                                .with(tableName.equalTo("orders"))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 

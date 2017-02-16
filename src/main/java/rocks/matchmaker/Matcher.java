@@ -67,7 +67,7 @@ public class Matcher<T> {
         return (Matcher<T>) matcher;
     }
 
-    //scopeType unused for now, but will help in debugging and structural matching later
+    //scopeType unused for now, but will help in debugging and structural equalTo later
     private final Class<?> scopeType;
     private final BiFunction<Object, Captures, Match<T>> matchFunction;
     private final Capture<T> capture;

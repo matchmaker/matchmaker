@@ -24,7 +24,8 @@ public interface Property<T> {
         return property(Function.identity());
     }
 
-    default <S> PropertyMatcher<T, S> matching(S value) {
+    //TODO rename back to the same name as other property refiners and make sure there are no signature abimguities
+    default <S> PropertyMatcher<T, S> equalTo(S value) {
         return matching(Matcher.equalTo(value));
     }
 
