@@ -29,14 +29,15 @@ public interface Property<T> {
         return matching(Matcher.equalTo(value));
     }
 
-    //TODO make Property carry the scopeType and remove scopeType / .Scoped from methods below?
+    //TODO make Property carry the scopeType and remove scopeType from methods below?
     default <S> PropertyMatcher<T, S> matching(Class<S> scopeType, Predicate<S> predicate) {
         return matching($(scopeType).$(predicate));
     }
 
-    default <S> PropertyMatcher<T, S> matching(Extractor.Scoped<?, S> extractor) {
-        return matching($(extractor));
-    }
+    //FIXME restore exrtractor-matching ability for properties (?)
+//    default <S> PropertyMatcher<T, S> matching(Extractor.Scoped<T, S> extractor) {
+//        return matching($(extractor.getScopeType()).matching(extractor));
+//    }
 
     <S> PropertyMatcher<T, S> matching(Matcher<S> matcher);
 }

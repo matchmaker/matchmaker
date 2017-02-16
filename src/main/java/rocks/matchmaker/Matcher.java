@@ -35,31 +35,6 @@ public class Matcher<T> {
         return new Matcher<>(expectedClass, matchFunction, null);
     }
 
-    /**
-     * For cases when evaluating a property is needed to check
-     * if it's possible to construct an object and that object's
-     * construction largely repeats checking the property.
-     * <p>
-     * E.g. let's say we have a set and we'd like to match
-     * other sets having a non-empty intersection with it.
-     * If the intersection is not empty, we'd like to use it
-     * in further computations. Extractors allow for exactly that.
-     * <p>
-     * An adequate extractor for the example above would compute
-     * the intersection and return it wrapped in a Match
-     * (think: null-capable Optional with a field for storing captures).
-     * If the intersection would be empty, the extractor should
-     * would a non-match by returning Match.empty().
-     *
-     * @param extractor
-     * @param <T>       type of the extracted value
-     * @return
-     */
-    public static <T> Matcher<T> $(Extractor.Scoped<?, T> extractor) {
-        Capture<T> capture = null;
-        return new Matcher<>(extractor.getScopeType(), toMatchFunction(extractor, capture), capture);
-    }
-
     //This expresses the fact that Matcher is covariant on T.
     //This is saying "Matcher<? extends T> is a Matcher<T>".
     @SuppressWarnings("unchecked cast")
@@ -77,12 +52,6 @@ public class Matcher<T> {
         this.scopeType = scopeType;
         this.matchFunction = matchFunction;
         this.capture = capture;
-    }
-
-    private static <T> BiFunction<Object, Captures, Match<T>> toMatchFunction(Extractor<T> extractor, Capture<T> capture) {
-        return (object, captures) -> extractor.apply(object, captures)
-                .map(value -> createMatch(capture, value, captures))
-                .orElse(Match.empty());
     }
 
     protected static <T> Match<T> createMatch(Capture<T> capture, T matchedValue, Captures captures) {
@@ -103,7 +72,27 @@ public class Matcher<T> {
                 .filter(predicate));
     }
 
-    public <R> Matcher<R> matching(Extractor.Scoped<?, R> extractor) {
+    /**
+     * For cases when evaluating a property is needed to check
+     * if it's possible to construct an object and that object's
+     * construction largely repeats checking the property.
+     * <p>
+     * E.g. let's say we have a set and we'd like to match
+     * other sets having a non-empty intersection with it.
+     * If the intersection is not empty, we'd like to use it
+     * in further computations. Extractors allow for exactly that.
+     * <p>
+     * An adequate extractor for the example above would compute
+     * the intersection and return it wrapped in a Match
+     * (think: null-capable Optional with a field for storing captures).
+     * If the intersection would be empty, the extractor should
+     * would a non-match by returning Match.empty().
+     *
+     * @param extractor
+     * @param <R>       type of the extracted value
+     * @return
+     */
+    public <R> Matcher<R> matching(Extractor<T, R> extractor) {
         return flatMap((value, captures) -> Match.of(value, captures)
                         .flatMap(v -> extractor.apply(v, captures)
                                 .map(vv -> Match.of(vv, captures))

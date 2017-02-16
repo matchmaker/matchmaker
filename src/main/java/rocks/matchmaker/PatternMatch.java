@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static rocks.matchmaker.Matcher.$;
+import static rocks.matchmaker.Matcher.nullable;
 
 public class PatternMatch<T, R> {
 
@@ -47,15 +48,11 @@ public class PatternMatch<T, R> {
     }
 
     public Matcher<R> returnFirst() {
-        return nullableAny().flatMap(MultiMatcherExtractors.returnFirst(cases));
+        return nullable(Object.class).flatMap(MultiMatcherExtractors.returnFirst(cases));
     }
 
     public Matcher<List<R>> returningAll() {
-        return nullableAny().flatMap(MultiMatcherExtractors.returnAll(cases));
-    }
-
-    public Matcher<Object> nullableAny() {
-        return $(Extractor.assumingNullableType(Object.class, Option::of));
+        return nullable(Object.class).flatMap(MultiMatcherExtractors.returnAll(cases));
     }
 
     public interface Case<T, R> {

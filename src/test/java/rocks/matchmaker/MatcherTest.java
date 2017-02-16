@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
-import static rocks.matchmaker.Extractor.assumingType;
 import static rocks.matchmaker.Matcher.$;
 import static rocks.matchmaker.Matcher.isNull;
 import static rocks.matchmaker.Matcher.nullable;
@@ -83,13 +82,13 @@ public class MatcherTest {
 
         assertMatch(aString.with(length.equalTo(1)), string);
         assertMatch(aString.with(length.matching(Integer.class, x -> x > 0)), string);
-        assertMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.of(x.toString())))), string);
+//        assertMatch(aString.with(length.matching(Extractor.assumingType(Integer.class, x -> Option.of(x.toString())))), string);
         assertMatch(aString.with(length.matching($())), string);
         assertMatch(aString.with(self().equalTo(string)), string);
 
         assertNoMatch(aString.with(length.equalTo(0)), string);
         assertNoMatch(aString.with(length.matching(Integer.class, x -> x < 1)), string);
-        assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
+//        assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
         assertNoMatch(aString.with(length.matching($(Void.class))), string);
         assertNoMatch(aString.with(self().equalTo("b")), string);
     }
@@ -121,14 +120,14 @@ public class MatcherTest {
         assertEquals(match.capture(lowercase), characters("string.").collect(toList()));
     }
 
-    private Extractor.Scoped<String, String> endsWith(String suffix) {
-        return assumingType(String.class, string -> Option.of(suffix).filter(__ -> string.endsWith(suffix)));
+    private Extractor<String, String> endsWith(String suffix) {
+        return (string, captures) -> Option.of(suffix).filter(__ -> string.endsWith(suffix));
     }
 
-    private Matcher<List<String>> hasLowercaseChars = $(assumingType(String.class, string -> {
+    private Matcher<List<String>> hasLowercaseChars = $(String.class).matching((string, captures) -> {
         List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
         return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
-    }));
+    });
 
     private boolean isLowerCase(String string) {
         return string.toLowerCase().equals(string);
@@ -170,10 +169,10 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = $(assumingType(String.class, x -> {
+        Matcher<List<String>> stringWithVowels = $(String.class).matching((x, captures) -> {
             List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
-        }));
+        });
 
         Capture<List<String>> vowels = newCapture();
 
@@ -219,11 +218,10 @@ public class MatcherTest {
         Capture<ScanNode> right = newCapture();
         Capture<List<PlanNode>> caputres = newCapture();
 
-        Matcher<List<PlanNode>> accessingTheDesiredCaptures = $(assumingType(PlanNode.class, (node, params) ->
+        Matcher<List<PlanNode>> accessingTheDesiredCaptures = $(PlanNode.class).matching((node, params) ->
                 Option.of(asList(
                         params.get(left), params.get(right), params.get(root), params.get(parent)
-                )))
-        );
+                )));
 
         Matcher<JoinNode> matcher = Join.capturedAs(root)
                 .with(probe.matching(Join.capturedAs(parent)
@@ -334,12 +332,9 @@ public class MatcherTest {
     }
 
     private <T> Matcher<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
-        return $(new Extractor.Scoped<T, T>(scopeClass, false, null) {
-            @Override
-            public Option apply(Object x, Captures captures) {
-                matchAttemtpts.add(scopeClass);
-                return Option.of(x);
-            }
+        return nullable(scopeClass).matching((x, captures) -> {
+            matchAttemtpts.add(scopeClass);
+            return Option.of(x);
         });
     }
 
