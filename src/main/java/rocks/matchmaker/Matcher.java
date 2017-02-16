@@ -101,7 +101,7 @@ public class Matcher<T> {
                                 .orElse(Match.empty())));
     }
 
-    public <S> Matcher<S> matching(Matcher<S> matcher) {
+    public <S> Matcher<S> $(Matcher<S> matcher) {
         return flatMap(matcher.matchFunction);
     }
 

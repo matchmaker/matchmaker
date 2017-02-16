@@ -123,7 +123,7 @@ public class MatcherTest {
                 .$(s -> s.startsWith("A"))
                 .$((CharSequence s) -> s.length() > 0)
                 .$(endsWith("string."))
-                .matching(hasLowercaseChars.capturedAs(lowercase));
+                .$(hasLowercaseChars.capturedAs(lowercase));
 
         List<String> lowercaseChars = characters("string.").collect(toList());
         Match<List<String>> match = assertMatch(matcher, matchedValue, lowercaseChars);
@@ -238,7 +238,7 @@ public class MatcherTest {
                         .with(probe.matching(Scan.capturedAs(left)))
                         .with(build.matching(Scan.capturedAs(right)))))
                 .with(build.matching(Scan
-                        .matching(accessingTheDesiredCaptures.capturedAs(caputres))));
+                        .$(accessingTheDesiredCaptures.capturedAs(caputres))));
 
         ScanNode expectedLeft = new ScanNode("a");
         ScanNode expectedRight = new ScanNode("b");
