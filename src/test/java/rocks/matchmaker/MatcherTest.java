@@ -90,14 +90,15 @@ public class MatcherTest {
         String string = "a";
 
         assertMatch(aString.$(length.equalTo(1)), string);
-        assertMatch(aString.$(length.matching(Integer.class, x -> x > 0)), string);
-//        assertMatch(aString.with(length.matching(Extractor.assumingType(Integer.class, x -> Option.of(x.toString())))), string);
+        assertMatch(aString.$(length.matching(x -> x > 0)), string);
+        assertMatch(aString.$(length.matching((x, captures) -> Option.of(x.toString()))), string);
+        assertMatch(aString.$(length.matching((x, captures) -> Option.of(x.toString()))), string);
         assertMatch(aString.$(length.matching($())), string);
         assertMatch(aString.$(self().equalTo(string)), string);
 
         assertNoMatch(aString.$(length.equalTo(0)), string);
-        assertNoMatch(aString.$(length.matching(Integer.class, x -> x < 1)), string);
-//        assertNoMatch(aString.with(length.matching(assumingType(Integer.class, x -> Option.empty()))), string);
+        assertNoMatch(aString.$(length.matching(x -> x < 1)), string);
+        assertNoMatch(aString.$(length.matching((x, captures) -> Option.empty())), string);
         assertNoMatch(aString.$(length.matching($(Void.class))), string);
         assertNoMatch(aString.$(self().equalTo("b")), string);
     }

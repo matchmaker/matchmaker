@@ -25,20 +25,25 @@ public interface Property<F, T> {
     }
 
     //TODO rename back to the same name as other property refiners and make sure there are no signature abimguities
-    default <S> PropertyMatcher<F, S> equalTo(S value) {
+    default PropertyMatcher<F, T> equalTo(T value) {
         return matching(Matcher.equalTo(value));
     }
 
-    //TODO make Property carry the scopeType and remove scopeType from methods below?
-    default <S> PropertyMatcher<F, S> matching(Class<S> scopeType, Predicate<S> predicate) {
-        return matching($(scopeType).$(predicate));
+    @SuppressWarnings("unchecked cast")
+    //the `matchAll` matcher will only ever be passed the return values of
+    //the `property` function.
+    default PropertyMatcher<F, T> matching(Predicate<T> predicate) {
+        Matcher<T> matchAll = (Matcher<T>) $();
+        return matching(matchAll.$(predicate));
     }
 
-    //FIXME introduce the third type to PropertyMatcher
-    //FIXME restore exrtractor-matching ability for properties (?)
-//    default <S> PropertyMatcher<F, S> matching(Extractor.Scoped<F, S> extractor) {
-//        return matching($(extractor.getScopeType()).matching(extractor));
-//    }
+    @SuppressWarnings("unchecked cast")
+    //the `matchAll` matcher will only ever be passed the return values of
+    //the `property` function.
+    default <R> PropertyMatcher<F, R> matching(Extractor<T, R> extractor) {
+        Matcher<T> matchAll = (Matcher<T>) $();
+        return matching(matchAll.$$(extractor));
+    }
 
-    <S> PropertyMatcher<F, S> matching(Matcher<S> matcher);
+    <R> PropertyMatcher<F, R> matching(Matcher<R> matcher);
 }
