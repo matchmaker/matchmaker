@@ -16,7 +16,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -288,12 +287,14 @@ public class MatcherTest {
                 .caseOf(s -> s.length() >= 8).returns(() -> length_at_least_8)
                 .returningAll();
 
-        assertMatch(passwordProperties, "", emptyList()); //TODO this, or noMatch?
         assertMatch(passwordProperties, "foobar", asList(has_lowercase));
         assertMatch(passwordProperties, "FooBar", asList(has_uppercase, has_lowercase));
         assertMatch(passwordProperties, "1234567890", asList(has_digits, length_at_least_8));
         assertMatch(passwordProperties,
                 "aProperPassword111", asList(has_uppercase, has_lowercase, has_digits, length_at_least_8));
+
+        assertNoMatch(passwordProperties, "");
+        assertNoMatch(passwordProperties, "!@#$%");
     }
 
     enum PasswordProperty {

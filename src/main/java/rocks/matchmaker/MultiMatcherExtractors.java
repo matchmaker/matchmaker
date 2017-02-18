@@ -33,6 +33,7 @@ public class MultiMatcherExtractors {
             //TODO we're losing captures here
             List<R> allMatches = successfulCases.map(Match::value).collect(toList());
             return Match.of(allMatches, captures)
+                    .filter(matches -> !matches.isEmpty())
                     .flatMap(value -> createMatch(null, allMatches, captures));
         };
     }
