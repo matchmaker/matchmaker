@@ -30,7 +30,7 @@ public interface Property<F, T> {
     @SuppressWarnings("unchecked cast")
     //the `matchAll` matcher will only ever be passed the return values of
     //the `property` function.
-    default PropertyMatcher<F, T> $(Predicate<T> predicate) {
+    default PropertyMatcher<F, T> $(Predicate<? super T> predicate) {
         Matcher<T> matchAll = (Matcher<T>) Matcher.$();
         return $(matchAll.$(predicate));
     }

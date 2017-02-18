@@ -91,6 +91,7 @@ public class MatcherTest {
 
         assertMatch(aString.$(length.equalTo(1)), string);
         assertMatch(aString.$(length.$(x -> x > 0)), string);
+        assertMatch(aString.$(length.$((Number x) -> x.intValue() > 0)), string);
         assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
         assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
         assertMatch(aString.$(length.$($())), string);
@@ -98,6 +99,7 @@ public class MatcherTest {
 
         assertNoMatch(aString.$(length.equalTo(0)), string);
         assertNoMatch(aString.$(length.$(x -> x < 1)), string);
+        assertNoMatch(aString.$(length.$((Number x) -> x.intValue() < 1)), string);
         assertNoMatch(aString.$(length.$((x, captures) -> Option.empty())), string);
         assertNoMatch(aString.$(length.$($(Void.class))), string);
         assertNoMatch(aString.$(self().equalTo("b")), string);
