@@ -64,9 +64,8 @@ public class Matcher<T> {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
-        BiFunction<Object, Captures, Match<T>> newMatchFunction =
-                matchFunction.andThen(match -> match.flatMap(value -> createMatch(capture, value, match.captures())));
-        return new Matcher<>(scopeType, newMatchFunction, capture);
+        return flatMap((value, captures) -> Match.of(value, captures)
+                .flatMap(v -> createMatch(capture, v, captures)));
     }
 
     public Matcher<T> $(Predicate<? super T> predicate) {
