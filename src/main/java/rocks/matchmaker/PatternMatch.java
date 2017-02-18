@@ -33,7 +33,6 @@ public class PatternMatch<T, R> {
         return caseOf($(this.matcherResultType).$(predicate));
     }
 
-    //TODO add Matcher.mapping and Matcher.flatMapping and use a List<Matcher<R>> instead of the 'cases' Map
     public Case<T, R> caseOf(Matcher<? extends T> matcher) {
         return new Case<T, R> (){
 
