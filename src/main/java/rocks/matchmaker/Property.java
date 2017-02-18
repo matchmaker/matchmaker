@@ -3,8 +3,6 @@ package rocks.matchmaker;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static rocks.matchmaker.Matcher.$;
-
 public interface Property<F, T> {
 
     static <F, T> Property<F, T> property(Function<F, T> property) {
@@ -14,7 +12,7 @@ public interface Property<F, T> {
     static <F, T> Property<F, T> optionalProperty(Function<F, Option<T>> property) {
         return new Property<F, T>() {
             @Override
-            public <R> PropertyMatcher<F, R> matching(Matcher<R> matcher) {
+            public <R> PropertyMatcher<F, R> $(Matcher<R> matcher) {
                 return PropertyMatcher.of(property, matcher);
             }
         };
@@ -26,24 +24,24 @@ public interface Property<F, T> {
 
     //TODO rename back to the same name as other property refiners and make sure there are no signature abimguities
     default PropertyMatcher<F, T> equalTo(T value) {
-        return matching(Matcher.equalTo(value));
+        return $(Matcher.equalTo(value));
     }
 
     @SuppressWarnings("unchecked cast")
     //the `matchAll` matcher will only ever be passed the return values of
     //the `property` function.
-    default PropertyMatcher<F, T> matching(Predicate<T> predicate) {
-        Matcher<T> matchAll = (Matcher<T>) $();
-        return matching(matchAll.$(predicate));
+    default PropertyMatcher<F, T> $(Predicate<T> predicate) {
+        Matcher<T> matchAll = (Matcher<T>) Matcher.$();
+        return $(matchAll.$(predicate));
     }
 
     @SuppressWarnings("unchecked cast")
     //the `matchAll` matcher will only ever be passed the return values of
     //the `property` function.
-    default <R> PropertyMatcher<F, R> matching(Extractor<T, R> extractor) {
-        Matcher<T> matchAll = (Matcher<T>) $();
-        return matching(matchAll.$$(extractor));
+    default <R> PropertyMatcher<F, R> $(Extractor<T, R> extractor) {
+        Matcher<T> matchAll = (Matcher<T>) Matcher.$();
+        return $(matchAll.$$(extractor));
     }
 
-    <R> PropertyMatcher<F, R> matching(Matcher<R> matcher);
+    <R> PropertyMatcher<F, R> $(Matcher<R> matcher);
 }

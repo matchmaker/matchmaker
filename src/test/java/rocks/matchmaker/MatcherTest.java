@@ -90,23 +90,23 @@ public class MatcherTest {
         String string = "a";
 
         assertMatch(aString.$(length.equalTo(1)), string);
-        assertMatch(aString.$(length.matching(x -> x > 0)), string);
-        assertMatch(aString.$(length.matching((x, captures) -> Option.of(x.toString()))), string);
-        assertMatch(aString.$(length.matching((x, captures) -> Option.of(x.toString()))), string);
-        assertMatch(aString.$(length.matching($())), string);
+        assertMatch(aString.$(length.$(x -> x > 0)), string);
+        assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
+        assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
+        assertMatch(aString.$(length.$($())), string);
         assertMatch(aString.$(self().equalTo(string)), string);
 
         assertNoMatch(aString.$(length.equalTo(0)), string);
-        assertNoMatch(aString.$(length.matching(x -> x < 1)), string);
-        assertNoMatch(aString.$(length.matching((x, captures) -> Option.empty())), string);
-        assertNoMatch(aString.$(length.matching($(Void.class))), string);
+        assertNoMatch(aString.$(length.$(x -> x < 1)), string);
+        assertNoMatch(aString.$(length.$((x, captures) -> Option.empty())), string);
+        assertNoMatch(aString.$(length.$($(Void.class))), string);
         assertNoMatch(aString.$(self().equalTo("b")), string);
     }
 
     @Test
     void match_nested_properties() {
         Matcher<ProjectNode> matcher = Project
-                .$(property(ProjectNode::getSource).matching(Scan));
+                .$(property(ProjectNode::getSource).$(Scan));
 
         assertMatch(matcher, new ProjectNode(new ScanNode("t")));
         assertNoMatch(matcher, new ScanNode("t"));
@@ -152,7 +152,7 @@ public class MatcherTest {
                         .map(sources -> sources.get(0)));
 
         Matcher<PlanNode> planNodeWithExactlyOneSource = $(PlanNode.class)
-                .$(onlySource.matching($()));
+                .$(onlySource.$($()));
 
         assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode("t")));
         assertNoMatch(planNodeWithExactlyOneSource, new ScanNode("t"));
@@ -165,8 +165,8 @@ public class MatcherTest {
         Capture<ScanNode> scan = newCapture();
 
         Matcher<ProjectNode> matcher = Project
-                .$(source.matching(Filter.as(filter)
-                        .$(source.matching(Scan.as(scan)
+                .$(source.$(Filter.as(filter)
+                        .$(source.$(Scan.as(scan)
                                 .$(tableName.equalTo("orders"))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
@@ -235,10 +235,10 @@ public class MatcherTest {
                 )));
 
         Matcher<JoinNode> matcher = Join.as(root)
-                .$(probe.matching(Join.as(parent)
-                        .$(probe.matching(Scan.as(left)))
-                        .$(build.matching(Scan.as(right)))))
-                .$(build.matching(Scan
+                .$(probe.$(Join.as(parent)
+                        .$(probe.$(Scan.as(left)))
+                        .$(build.$(Scan.as(right)))))
+                .$(build.$(Scan
                         .$$(accessingTheDesiredCaptures.as(caputres))));
 
         ScanNode expectedLeft = new ScanNode("a");
@@ -301,12 +301,12 @@ public class MatcherTest {
 
         Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
                 .caseOf(Join
-                        .$(probe.matching(Scan
+                        .$(probe.$(Scan
                                 .as(scanNode)))
                 )
                 .returns(Function.identity())
                 .caseOf(Join
-                        .$(build.matching(Scan
+                        .$(build.$(Scan
                                 .as(scanNode)))
                 )
                 .returns(Function.identity())
