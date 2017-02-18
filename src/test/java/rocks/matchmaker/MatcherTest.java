@@ -90,6 +90,7 @@ public class MatcherTest {
         String string = "a";
 
         assertMatch(aString.$(length.$(1)), string);
+        assertMatch(Project.$(source.$(ScanNode.class)), new ProjectNode(new ScanNode("T")));
         assertMatch(aString.$(length.$(x -> x > 0)), string);
         assertMatch(aString.$(length.$((Number x) -> x.intValue() > 0)), string);
         assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
@@ -98,6 +99,7 @@ public class MatcherTest {
         assertMatch(aString.$(self().$(string)), string);
 
         assertNoMatch(aString.$(length.$(0)), string);
+        assertNoMatch(Project.$(source.$(ScanNode.class)), new ProjectNode(new ProjectNode(new ScanNode("T"))));
         assertNoMatch(aString.$(length.$(x -> x < 1)), string);
         assertNoMatch(aString.$(length.$((Number x) -> x.intValue() < 1)), string);
         assertNoMatch(aString.$(length.$((x, captures) -> Option.empty())), string);

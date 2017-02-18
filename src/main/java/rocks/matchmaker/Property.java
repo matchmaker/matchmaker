@@ -26,6 +26,10 @@ public interface Property<F, T> {
         return $(Matcher.equalTo(value));
     }
 
+    default PropertyMatcher<F, T> $(Class<? extends T> type) {
+        return $(Matcher.upcast(Matcher.$(type)));
+    }
+
     @SuppressWarnings("unchecked cast")
     //the `matchAll` matcher will only ever be passed the return values of
     //the `property` function.
