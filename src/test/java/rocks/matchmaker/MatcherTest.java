@@ -89,20 +89,20 @@ public class MatcherTest {
         Property<String, Integer> length = property(String::length);
         String string = "a";
 
-        assertMatch(aString.$(length.equalTo(1)), string);
+        assertMatch(aString.$(length.$(1)), string);
         assertMatch(aString.$(length.$(x -> x > 0)), string);
         assertMatch(aString.$(length.$((Number x) -> x.intValue() > 0)), string);
         assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
         assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
         assertMatch(aString.$(length.$($())), string);
-        assertMatch(aString.$(self().equalTo(string)), string);
+        assertMatch(aString.$(self().$(string)), string);
 
-        assertNoMatch(aString.$(length.equalTo(0)), string);
+        assertNoMatch(aString.$(length.$(0)), string);
         assertNoMatch(aString.$(length.$(x -> x < 1)), string);
         assertNoMatch(aString.$(length.$((Number x) -> x.intValue() < 1)), string);
         assertNoMatch(aString.$(length.$((x, captures) -> Option.empty())), string);
         assertNoMatch(aString.$(length.$($(Void.class))), string);
-        assertNoMatch(aString.$(self().equalTo("b")), string);
+        assertNoMatch(aString.$(self().$("b")), string);
     }
 
     @Test
@@ -170,7 +170,7 @@ public class MatcherTest {
         Matcher<ProjectNode> matcher = Project
                 .$(source.$(Filter.as(filter)
                         .$(source.$(Scan.as(scan)
-                                .$(tableName.equalTo("orders"))))));
+                                .$(tableName.$("orders"))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 

@@ -22,8 +22,7 @@ public interface Property<F, T> {
         return property(Function.identity());
     }
 
-    //TODO rename back to the same name as other property refiners and make sure there are no signature abimguities
-    default PropertyMatcher<F, T> equalTo(T value) {
+    default PropertyMatcher<F, T> $(T value) {
         return $(Matcher.equalTo(value));
     }
 
