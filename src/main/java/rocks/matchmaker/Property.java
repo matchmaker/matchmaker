@@ -40,7 +40,7 @@ public interface Property<F, T> {
     //the `property` function.
     default <R> PropertyMatcher<F, R> $(Extractor<T, R> extractor) {
         Matcher<T> matchAll = (Matcher<T>) Matcher.$();
-        return $(matchAll.$$(extractor));
+        return $(matchAll.$(extractor));
     }
 
     <R> PropertyMatcher<F, R> $(Matcher<R> matcher);
