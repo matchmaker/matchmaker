@@ -167,11 +167,12 @@ public class MatcherTest {
     void capturing_matches_in_a_typesafe_manner() {
         Capture<FilterNode> filter = newCapture();
         Capture<ScanNode> scan = newCapture();
+        Capture<String> name = newCapture();
 
         Matcher<ProjectNode> matcher = Project
                 .$(source.$(Filter.as(filter)
                         .$(source.$(Scan.as(scan)
-                                .$(tableName.$("orders"))))));
+                                .$(tableName.as(name))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 
@@ -180,6 +181,7 @@ public class MatcherTest {
         FilterNode capturedFilter = match.capture(filter);
         assertEquals(tree.getSource(), capturedFilter);
         assertEquals(((FilterNode) tree.getSource()).getSource(), match.capture(scan));
+        assertEquals("orders", match.capture(name));
     }
 
     @Test

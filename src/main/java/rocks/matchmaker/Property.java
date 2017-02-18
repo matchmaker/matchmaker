@@ -22,6 +22,11 @@ public interface Property<F, T> {
         return property(Function.identity());
     }
 
+    default PropertyMatcher<F, T> as(Capture<T> capture) {
+        Matcher<T> matchAll = (Matcher<T>) Matcher.$();
+        return $(matchAll.as(capture));
+    }
+
     default PropertyMatcher<F, T> $(T value) {
         return $(Matcher.equalTo(value));
     }
