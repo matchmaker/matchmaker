@@ -124,6 +124,7 @@ public class MatcherTest {
                 .$(s -> s.startsWith("A"))
                 .$((CharSequence s) -> s.length() > 0)
                 .$(endsWith("string."))
+                .$((value, captures) -> Option.of(value).filter(v -> v.trim().equals(v)))
                 .$(hasLowercaseChars.as(lowercase));
 
         List<String> lowercaseChars = characters("string.").collect(toList());
