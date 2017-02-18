@@ -254,7 +254,6 @@ public class MatcherTest {
         assertEquals(match.capture(caputres), asList(expectedLeft, expectedRight, expectedRoot, expectedParent));
     }
 
-    //TODO add negative cases to the below
     @Test
     void pattern_matching_for_single_result() {
         //We restrict the PatternMatch result type (here: Integer)
@@ -274,6 +273,19 @@ public class MatcherTest {
         assertMatch(sourcesNumber, new ProjectNode(null), 1);
         assertMatch(sourcesNumber, new JoinNode(null, null), 2);
         assertMatch(sourcesNumber, new Exchange(null, null, null), 3);
+    }
+
+    @Test
+    void pattern_matching_for_single_result_with_negative_cases() {
+        Matcher<Object> visitor = matchFor(Object.class, Object.class)
+                .caseOf($(Integer.class)).returns(() -> "integer")
+                .caseOf($(String.class)).returns(() -> "string")
+                .returnFirst();
+
+        assertMatch(visitor, 42, "integer");
+        assertMatch(visitor, "John Doe", "string");
+        assertNoMatch(visitor, new Object());
+        assertNoMatch(visitor, null);
     }
 
     @Test
