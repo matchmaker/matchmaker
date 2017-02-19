@@ -95,8 +95,8 @@ public class Matcher<T> {
      */
     public <R> Matcher<R> $(Extractor<T, R> extractor) {
         return flatMap((value, captures) -> extractor.apply(value, captures)
-                                .map(v -> Match.of(v, captures))
-                                .orElse(Match.empty()));
+                .map(v -> Match.of(v, captures))
+                .orElse(Match.empty()));
     }
 
     public <R> Matcher<R> $(Matcher<R> matcher) {
