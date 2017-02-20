@@ -6,8 +6,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static rocks.matchmaker.Matcher.$;
 import static rocks.matchmaker.Matcher.nullable;
+import static rocks.matchmaker.Matcher.typeOf;
 
 public class PatternMatch<T, R> {
 
@@ -30,7 +30,7 @@ public class PatternMatch<T, R> {
     }
 
     public Case<T, R> caseOf(Predicate<T> predicate) {
-        return caseOf($(this.matcherResultType).$(predicate));
+        return caseOf(typeOf(this.matcherResultType).matching(predicate));
     }
 
     public Case<T, R> caseOf(Matcher<? extends T> matcher) {

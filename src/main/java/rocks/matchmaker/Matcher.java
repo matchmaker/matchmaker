@@ -8,17 +8,17 @@ import java.util.function.Predicate;
 
 public class Matcher<T> {
 
-    public static Matcher<Object> $() {
-        return $(Object.class);
+    public static Matcher<Object> any() {
+        return typeOf(Object.class);
     }
 
     public static <T> Matcher<T> equalTo(T expectedValue) {
         Util.checkArgument(expectedValue != null, "expectedValue can't be null. Use `Matcher.isNull()` instead");
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
-        return $(expectedClass).$(x -> x.equals(expectedValue));
+        return typeOf(expectedClass).matching(x -> x.equals(expectedValue));
     }
 
-    public static <T> Matcher<T> $(Class<T> expectedClass) {
+    public static <T> Matcher<T> typeOf(Class<T> expectedClass) {
         BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
                 .filter(expectedClass::isInstance)
                 .map(expectedClass::cast);
@@ -27,7 +27,7 @@ public class Matcher<T> {
 
     @SuppressWarnings("unchecked cast")
     public static <T> Matcher<T> isNull() {
-        return (Matcher<T>) nullable(Object.class).$(Objects::isNull);
+        return (Matcher<T>) nullable(Object.class).matching(Objects::isNull);
     }
 
     public static <T> Matcher<T> nullable(Class<T> expectedClass) {
@@ -60,7 +60,7 @@ public class Matcher<T> {
         return Match.of(matchedValue, captures.addAll(Captures.ofNullable(capture, matchedValue)));
     }
 
-    public Matcher<T> as(Capture<T> capture) {
+    public Matcher<T> capturedAs(Capture<T> capture) {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
@@ -68,7 +68,7 @@ public class Matcher<T> {
                 .flatMap(v -> createMatch(capture, v, captures)));
     }
 
-    public Matcher<T> $(Predicate<? super T> predicate) {
+    public Matcher<T> matching(Predicate<? super T> predicate) {
         return flatMap((value, captures) -> Match.of(value, captures)
                 .filter(predicate));
     }
@@ -93,17 +93,17 @@ public class Matcher<T> {
      * @param <R>       type of the extracted value
      * @return
      */
-    public <R> Matcher<R> $(Extractor<T, R> extractor) {
+    public <R> Matcher<R> matching(Extractor<T, R> extractor) {
         return flatMap((value, captures) -> extractor.apply(value, captures)
                 .map(v -> Match.of(v, captures))
                 .orElse(Match.empty()));
     }
 
-    public <R> Matcher<R> $(Matcher<R> matcher) {
+    public <R> Matcher<R> matching(Matcher<R> matcher) {
         return flatMap(matcher.matchFunction);
     }
 
-    public <R> Matcher<T> $(PropertyMatcher<? super T, R> matcher) {
+    public <R> Matcher<T> with(PropertyMatcher<? super T, R> matcher) {
         PropertyMatcher<T, R> castMatcher = PropertyMatcher.upcast(matcher);
         return this.flatMap((selfMatchValue, captures) -> {
             Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);

@@ -12,7 +12,7 @@ public interface Property<F, T> {
     static <F, T> Property<F, T> optionalProperty(Function<F, Option<T>> property) {
         return new Property<F, T>() {
             @Override
-            public <R> PropertyMatcher<F, R> $(Matcher<R> matcher) {
+            public <R> PropertyMatcher<F, R> matching(Matcher<R> matcher) {
                 return PropertyMatcher.of(property, matcher);
             }
         };
@@ -22,34 +22,34 @@ public interface Property<F, T> {
         return property(Function.identity());
     }
 
-    default PropertyMatcher<F, T> as(Capture<T> capture) {
-        Matcher<T> matchAll = (Matcher<T>) Matcher.$();
-        return $(matchAll.as(capture));
+    default PropertyMatcher<F, T> capturedAs(Capture<T> capture) {
+        Matcher<T> matchAll = (Matcher<T>) Matcher.any();
+        return matching(matchAll.capturedAs(capture));
     }
 
-    default PropertyMatcher<F, T> $(T value) {
-        return $(Matcher.equalTo(value));
+    default PropertyMatcher<F, T> equalTo(T value) {
+        return matching(Matcher.equalTo(value));
     }
 
-    default PropertyMatcher<F, T> $(Class<? extends T> type) {
-        return $(Matcher.upcast(Matcher.$(type)));
-    }
-
-    @SuppressWarnings("unchecked cast")
-    //the `matchAll` matcher will only ever be passed the return values of
-    //the `property` function.
-    default PropertyMatcher<F, T> $(Predicate<? super T> predicate) {
-        Matcher<T> matchAll = (Matcher<T>) Matcher.$();
-        return $(matchAll.$(predicate));
+    default PropertyMatcher<F, T> ofType(Class<? extends T> type) {
+        return matching(Matcher.upcast(Matcher.typeOf(type)));
     }
 
     @SuppressWarnings("unchecked cast")
-    //the `matchAll` matcher will only ever be passed the return values of
+    //the `matchAll` matcher will only ever be passed the return values matching
     //the `property` function.
-    default <R> PropertyMatcher<F, R> $(Extractor<T, R> extractor) {
-        Matcher<T> matchAll = (Matcher<T>) Matcher.$();
-        return $(matchAll.$(extractor));
+    default PropertyMatcher<F, T> matching(Predicate<? super T> predicate) {
+        Matcher<T> matchAll = (Matcher<T>) Matcher.any();
+        return matching(matchAll.matching(predicate));
     }
 
-    <R> PropertyMatcher<F, R> $(Matcher<R> matcher);
+    @SuppressWarnings("unchecked cast")
+    //the `matchAll` matcher will only ever be passed the return values matching
+    //the `property` function.
+    default <R> PropertyMatcher<F, R> matching(Extractor<T, R> extractor) {
+        Matcher<T> matchAll = (Matcher<T>) Matcher.any();
+        return matching(matchAll.matching(extractor));
+    }
+
+    <R> PropertyMatcher<F, R> matching(Matcher<R> matcher);
 }

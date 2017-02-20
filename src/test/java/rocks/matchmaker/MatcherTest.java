@@ -21,10 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
-import static rocks.matchmaker.Matcher.$;
+import static rocks.matchmaker.Matcher.any;
 import static rocks.matchmaker.Matcher.equalTo;
 import static rocks.matchmaker.Matcher.isNull;
 import static rocks.matchmaker.Matcher.nullable;
+import static rocks.matchmaker.Matcher.typeOf;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
@@ -38,7 +39,7 @@ import static rocks.matchmaker.Property.self;
 public class MatcherTest {
 
     private static Matcher<JoinNode> join() {
-        return $(JoinNode.class);
+        return typeOf(JoinNode.class);
     }
 
     private static Property<JoinNode, PlanNode> build() {
@@ -50,20 +51,20 @@ public class MatcherTest {
     }
 
     private static Matcher<ScanNode> scan() {
-        return $(ScanNode.class);
+        return typeOf(ScanNode.class);
     }
 
     private static Matcher<FilterNode> filter() {
-        return $(FilterNode.class);
+        return typeOf(FilterNode.class);
     }
 
     private static Matcher<PlanNode> plan() {
-        return $(PlanNode.class);
+        return typeOf(PlanNode.class);
     }
 
 
     private static Matcher<ProjectNode> project() {
-        return $(ProjectNode.class);
+        return typeOf(ProjectNode.class);
     }
 
     private static Property<ScanNode, String> tableName() {
@@ -77,8 +78,8 @@ public class MatcherTest {
     @Test
     void trivial_matchers() {
         //any
-        assertMatch($(), 42);
-        assertMatch($(), "John Doe");
+        assertMatch(any(), 42);
+        assertMatch(any(), "John Doe");
 
         //equalTo
         Matcher<Integer> theAnswer = equalTo(42);
@@ -89,13 +90,13 @@ public class MatcherTest {
         assertTrue(throwable.getMessage().contains("Use `Matcher.isNull()` instead"));
 
         //class based
-        assertMatch($(Integer.class), 42);
-        assertMatch($(Number.class), 42);
-        assertNoMatch($(Integer.class), "John Doe");
+        assertMatch(typeOf(Integer.class), 42);
+        assertMatch(typeOf(Number.class), 42);
+        assertNoMatch(typeOf(Integer.class), "John Doe");
 
         //predicate-based
-        assertMatch($(Integer.class).$(x -> x > 0), 42);
-        assertNoMatch($(Integer.class).$(x -> x > 0), -1);
+        assertMatch(typeOf(Integer.class).matching(x -> x > 0), 42);
+        assertNoMatch(typeOf(Integer.class).matching(x -> x > 0), -1);
     }
 
     @Test
@@ -106,31 +107,31 @@ public class MatcherTest {
 
     @Test
     void property_matchers() {
-        Matcher<String> aString = $(String.class);
+        Matcher<String> aString = typeOf(String.class);
         Property<String, Integer> length = property(String::length);
         String string = "a";
 
-        assertMatch(aString.$(length.$(1)), string);
-        assertMatch(project().$(source().$(ScanNode.class)), new ProjectNode(new ScanNode("T")));
-        assertMatch(aString.$(length.$(x -> x > 0)), string);
-        assertMatch(aString.$(length.$((Number x) -> x.intValue() > 0)), string);
-        assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
-        assertMatch(aString.$(length.$((x, captures) -> Option.of(x.toString()))), string);
-        assertMatch(aString.$(length.$($())), string);
-        assertMatch(aString.$(self().$(string)), string);
+        assertMatch(aString.with(length.equalTo(1)), string);
+        assertMatch(project().with(source().ofType(ScanNode.class)), new ProjectNode(new ScanNode("T")));
+        assertMatch(aString.with(length.matching(x -> x > 0)), string);
+        assertMatch(aString.with(length.matching((Number x) -> x.intValue() > 0)), string);
+        assertMatch(aString.with(length.matching((x, captures) -> Option.of(x.toString()))), string);
+        assertMatch(aString.with(length.matching((x, captures) -> Option.of(x.toString()))), string);
+        assertMatch(aString.with(length.matching(any())), string);
+        assertMatch(aString.with(self().equalTo(string)), string);
 
-        assertNoMatch(aString.$(length.$(0)), string);
-        assertNoMatch(project().$(source().$(ScanNode.class)), new ProjectNode(new ProjectNode(new ScanNode("T"))));
-        assertNoMatch(aString.$(length.$(x -> x < 1)), string);
-        assertNoMatch(aString.$(length.$((Number x) -> x.intValue() < 1)), string);
-        assertNoMatch(aString.$(length.$((x, captures) -> Option.empty())), string);
-        assertNoMatch(aString.$(length.$($(Void.class))), string);
-        assertNoMatch(aString.$(self().$("b")), string);
+        assertNoMatch(aString.with(length.equalTo(0)), string);
+        assertNoMatch(project().with(source().ofType(ScanNode.class)), new ProjectNode(new ProjectNode(new ScanNode("T"))));
+        assertNoMatch(aString.with(length.matching(x -> x < 1)), string);
+        assertNoMatch(aString.with(length.matching((Number x) -> x.intValue() < 1)), string);
+        assertNoMatch(aString.with(length.matching((x, captures) -> Option.empty())), string);
+        assertNoMatch(aString.with(length.matching(typeOf(Void.class))), string);
+        assertNoMatch(aString.with(self().equalTo("b")), string);
     }
 
     @Test
     void match_nested_properties() {
-        Matcher<ProjectNode> matcher = project().$(source().$(scan()));
+        Matcher<ProjectNode> matcher = project().with(source().matching(scan()));
 
         assertMatch(matcher, new ProjectNode(new ScanNode("t")));
         assertNoMatch(matcher, new ScanNode("t"));
@@ -144,12 +145,12 @@ public class MatcherTest {
 
         String matchedValue = "A little string.";
 
-        Matcher<List<String>> matcher = $(String.class)
-                .$(s -> s.startsWith("A"))
-                .$((CharSequence s) -> s.length() > 0)
-                .$(endsWith("string."))
-                .$((value, captures) -> Option.of(value).filter(v -> v.trim().equals(v)))
-                .$(hasLowercaseChars.as(lowercase));
+        Matcher<List<String>> matcher = typeOf(String.class)
+                .matching(s -> s.startsWith("A"))
+                .matching((CharSequence s) -> s.length() > 0)
+                .matching(endsWith("string."))
+                .matching((value, captures) -> Option.of(value).filter(v -> v.trim().equals(v)))
+                .matching(hasLowercaseChars.capturedAs(lowercase));
 
         List<String> lowercaseChars = characters("string.").collect(toList());
         Match<List<String>> match = assertMatch(matcher, matchedValue, lowercaseChars);
@@ -160,7 +161,7 @@ public class MatcherTest {
         return (string, captures) -> Option.of(suffix).filter(__ -> string.endsWith(suffix));
     }
 
-    private Matcher<List<String>> hasLowercaseChars = $(String.class).$((string, captures) -> {
+    private Matcher<List<String>> hasLowercaseChars = typeOf(String.class).matching((string, captures) -> {
         List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
         return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
     });
@@ -177,7 +178,7 @@ public class MatcherTest {
                         .map(sources -> sources.get(0)));
 
         Matcher<PlanNode> planNodeWithExactlyOneSource = plan()
-                .$(onlySource.$($()));
+                .with(onlySource.matching(any()));
 
         assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode("t")));
         assertNoMatch(planNodeWithExactlyOneSource, new ScanNode("t"));
@@ -191,9 +192,9 @@ public class MatcherTest {
         Capture<String> name = newCapture();
 
         Matcher<ProjectNode> matcher = project()
-                .$(source().$(filter().as(filter)
-                        .$(source().$(scan().as(scan)
-                                .$(tableName().as(name))))));
+                .with(source().matching(filter().capturedAs(filter)
+                        .with(source().matching(scan().capturedAs(scan)
+                                .with(tableName().capturedAs(name))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 
@@ -207,14 +208,14 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = $(String.class).$((x, captures) -> {
+        Matcher<List<String>> stringWithVowels = typeOf(String.class).matching((x, captures) -> {
             List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
         });
 
         Capture<List<String>> vowels = newCapture();
 
-        Match<List<String>> match = assertMatch(stringWithVowels.as(vowels), "John Doe", asList("o", "o", "e"));
+        Match<List<String>> match = assertMatch(stringWithVowels.capturedAs(vowels), "John Doe", asList("o", "o", "e"));
         assertEquals(match.value(), match.capture(vowels));
 
         assertNoMatch(stringWithVowels, "pqrst");
@@ -227,7 +228,7 @@ public class MatcherTest {
     @Test
     void no_match_means_no_captures() {
         Capture<Void> impossible = newCapture();
-        Matcher<Void> matcher = $(Void.class).as(impossible);
+        Matcher<Void> matcher = typeOf(Void.class).capturedAs(impossible);
 
         Match<Void> match = matcher.match(42);
 
@@ -238,7 +239,7 @@ public class MatcherTest {
 
     @Test
     void unknown_capture_is_an_error() {
-        Matcher<?> matcher = $();
+        Matcher<?> matcher = any();
         Capture<?> unknownCapture = newCapture();
 
         Match<?> match = matcher.match(42);
@@ -256,17 +257,17 @@ public class MatcherTest {
         Capture<ScanNode> right = newCapture();
         Capture<List<PlanNode>> caputres = newCapture();
 
-        Matcher<List<PlanNode>> accessingTheDesiredCaptures = plan().$((node, params) ->
+        Matcher<List<PlanNode>> accessingTheDesiredCaptures = plan().matching((node, params) ->
                 Option.of(asList(
                         params.get(left), params.get(right), params.get(root), params.get(parent)
                 )));
 
-        Matcher<JoinNode> matcher = join().as(root)
-                .$(probe().$(join().as(parent)
-                        .$(probe().$(scan().as(left)))
-                        .$(build().$(scan().as(right)))))
-                .$(build().$(scan()
-                        .$(accessingTheDesiredCaptures.as(caputres))));
+        Matcher<JoinNode> matcher = join().capturedAs(root)
+                .with(probe().matching(join().capturedAs(parent)
+                        .with(probe().matching(scan().capturedAs(left)))
+                        .with(build().matching(scan().capturedAs(right)))))
+                .with(build().matching(scan()
+                        .matching(accessingTheDesiredCaptures.capturedAs(caputres))));
 
         ScanNode expectedLeft = new ScanNode("a");
         ScanNode expectedRight = new ScanNode("b");
@@ -301,8 +302,8 @@ public class MatcherTest {
     @Test
     void pattern_matching_for_single_result_with_negative_cases() {
         Matcher<Object> visitor = matchFor(Object.class, Object.class)
-                .caseOf($(Integer.class)).returns(() -> "integer")
-                .caseOf($(String.class)).returns(() -> "string")
+                .caseOf(typeOf(Integer.class)).returns(() -> "integer")
+                .caseOf(typeOf(String.class)).returns(() -> "string")
                 .returnFirst();
 
         assertMatch(visitor, 42, "integer");
@@ -341,14 +342,14 @@ public class MatcherTest {
         Capture<ScanNode> scanNode = newCapture();
 
         Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
-                .caseOf(join().$(
-                        probe().$(scan()
-                                .as(scanNode)))
+                .caseOf(join().with(
+                        probe().matching(scan()
+                                .capturedAs(scanNode)))
                 )
                 .returns(Function.identity())
-                .caseOf(join().$(
-                        build().$(scan()
-                                .as(scanNode)))
+                .caseOf(join().with(
+                        build().matching(scan()
+                                .capturedAs(scanNode)))
                 )
                 .returns(Function.identity())
                 .returnFirst();
@@ -384,7 +385,7 @@ public class MatcherTest {
     }
 
     private <T> Matcher<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
-        return nullable(scopeClass).$((x, captures) -> {
+        return nullable(scopeClass).matching((x, captures) -> {
             matchAttemtpts.add(scopeClass);
             return Option.of(x);
         });
@@ -403,8 +404,8 @@ public class MatcherTest {
 
     @Test
     void null_not_matched_by_default() {
-        assertNoMatch($(), null);
-        assertNoMatch($(Integer.class), null);
+        assertNoMatch(any(), null);
+        assertNoMatch(typeOf(Integer.class), null);
 
         //the predefined isNull matcher works as expected:
         assertMatch(isNull(), null);
@@ -415,12 +416,12 @@ public class MatcherTest {
         assertMatch(nullable(Integer.class), 42);
 
         //the nullable matchers work as expected when chained with predicates
-        assertMatch(nullable(String.class).$(value -> "John Doe".equals(value)), "John Doe");
-        assertNoMatch(nullable(String.class).$(value -> "John Doe".equals(value)), null);
+        assertMatch(nullable(String.class).matching(value -> "John Doe".equals(value)), "John Doe");
+        assertNoMatch(nullable(String.class).matching(value -> "John Doe".equals(value)), null);
 
         //one has to be careful when basing off nullable matchers
         assertThrows(NullPointerException.class, () ->
-                assertMatch(nullable(String.class).$(x -> x.length() > 0), null));
+        assertMatch(nullable(String.class).matching(x -> x.length() > 0), null));
     }
 
     private <T> Match<T> assertMatch(Matcher<T> matcher, T expectedMatch) {
