@@ -31,6 +31,10 @@ public abstract class Match<T> {
 
     public abstract <U> Match<U> flatMap(Function<? super T, Match<U>> mapper);
 
+    public T orElse(T fallback) {
+        return isPresent() ? value() : fallback;
+    }
+
     public <S> S capture(Capture<S> capture) {
         return captures().get(capture);
     }
