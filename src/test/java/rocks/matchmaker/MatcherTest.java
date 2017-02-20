@@ -313,14 +313,12 @@ public class MatcherTest {
         Capture<ScanNode> scanNode = newCapture();
 
         Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
-                .caseOf(join().with(
-                        probe().matching(scan()
-                                .capturedAs(scanNode)))
+                .caseOf(join()
+                        .with(probe().matching(scan().capturedAs(scanNode)))
                 )
                 .returns(Function.identity())
-                .caseOf(join().with(
-                        build().matching(scan()
-                                .capturedAs(scanNode)))
+                .caseOf(join()
+                        .with(build().matching(scan().capturedAs(scanNode)))
                 )
                 .returns(Function.identity())
                 .returnFirst();
