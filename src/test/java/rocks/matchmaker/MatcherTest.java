@@ -6,7 +6,6 @@ import example.ast.JoinNode;
 import example.ast.PlanNode;
 import example.ast.ProjectNode;
 import example.ast.ScanNode;
-import example.ast.SingleSourcePlanNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -15,6 +14,15 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static example.ast.Matchers.build;
+import static example.ast.Matchers.filter;
+import static example.ast.Matchers.join;
+import static example.ast.Matchers.plan;
+import static example.ast.Matchers.probe;
+import static example.ast.Matchers.project;
+import static example.ast.Matchers.scan;
+import static example.ast.Matchers.source;
+import static example.ast.Matchers.tableName;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,43 +45,6 @@ import static rocks.matchmaker.Property.self;
 
 @SuppressWarnings("WeakerAccess")
 public class MatcherTest {
-
-    private static Matcher<JoinNode> join() {
-        return typeOf(JoinNode.class);
-    }
-
-    private static Property<JoinNode, PlanNode> build() {
-        return property(JoinNode::getBuild);
-    }
-
-    private static Property<JoinNode, PlanNode> probe() {
-        return property(JoinNode::getProbe);
-    }
-
-    private static Matcher<ScanNode> scan() {
-        return typeOf(ScanNode.class);
-    }
-
-    private static Matcher<FilterNode> filter() {
-        return typeOf(FilterNode.class);
-    }
-
-    private static Matcher<PlanNode> plan() {
-        return typeOf(PlanNode.class);
-    }
-
-
-    private static Matcher<ProjectNode> project() {
-        return typeOf(ProjectNode.class);
-    }
-
-    private static Property<ScanNode, String> tableName() {
-        return property(ScanNode::getTableName);
-    }
-
-    private static Property<SingleSourcePlanNode, PlanNode> source() {
-        return property(SingleSourcePlanNode::getSource);
-    }
 
     @Test
     void trivial_matchers() {
