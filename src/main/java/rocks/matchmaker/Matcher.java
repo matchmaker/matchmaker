@@ -56,16 +56,15 @@ public class Matcher<T> {
         this.capture = capture;
     }
 
-    protected static <T> Match<T> createMatch(Capture<T> capture, T matchedValue, Captures captures) {
-        return Match.of(matchedValue, captures.addAll(Captures.ofNullable(capture, matchedValue)));
-    }
-
     public Matcher<T> capturedAs(Capture<T> capture) {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
-        return flatMap((value, captures) -> Match.of(value, captures)
-                .flatMap(v -> createMatch(capture, v, captures)));
+        return flatMap((value, captures) -> createMatch(capture, value, captures));
+    }
+
+    protected static <T> Match<T> createMatch(Capture<T> capture, T matchedValue, Captures captures) {
+        return Match.of(matchedValue, captures.addAll(Captures.ofNullable(capture, matchedValue)));
     }
 
     public Matcher<T> matching(Predicate<? super T> predicate) {
