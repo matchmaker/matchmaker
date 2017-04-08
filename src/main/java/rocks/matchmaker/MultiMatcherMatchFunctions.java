@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static rocks.matchmaker.Matcher.createMatch;
 
-public class MultiMatcherExtractors {
+public class MultiMatcherMatchFunctions {
 
     static <R> BiFunction<Object, Captures, Match<R>> returnFirst(List<Matcher<R>> cases) {
         SortedSetMultimap<Class<?>, Indexed<Matcher<R>>> matchersByScopeType = indexByScopeType(cases);

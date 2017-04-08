@@ -39,6 +39,7 @@ public class PatternMatch<T, R> {
             @Override
             public PatternMatch<T, R> returns(Function<T, R> result) {
                 //TODO rewrite this so that immutable objects are used
+                //TODO: replace with matcher.map(result)
                 Matcher<R> resultMatcher = matcher.flatMap((match, captures) -> Match.of(result.apply(match), captures));
                 PatternMatch.this.cases.add(resultMatcher);
                 return PatternMatch.this;
@@ -47,11 +48,11 @@ public class PatternMatch<T, R> {
     }
 
     public Matcher<R> returnFirst() {
-        return nullable(Object.class).flatMap(MultiMatcherExtractors.returnFirst(cases));
+        return nullable(Object.class).flatMap(MultiMatcherMatchFunctions.returnFirst(cases));
     }
 
     public Matcher<List<R>> returningAll() {
-        return nullable(Object.class).flatMap(MultiMatcherExtractors.returnAll(cases));
+        return nullable(Object.class).flatMap(MultiMatcherMatchFunctions.returnAll(cases));
     }
 
     public interface Case<T, R> {
