@@ -122,7 +122,7 @@ public class Pattern<T> {
 
     protected <R> Pattern<R> flatMap(BiFunction<? super T, Captures, Match<R>> mapper) {
         BiFunction<Object, Captures, Match<R>> newMatchFunction = (object, captures) -> {
-            Match<T> originalMatch = matchFunction.apply(object, captures);
+            Match<T> originalMatch = match(object, captures);
             return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));
         };
         return new Pattern<>(scopeType, newMatchFunction, null);
