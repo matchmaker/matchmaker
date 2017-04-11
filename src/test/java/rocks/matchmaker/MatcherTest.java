@@ -398,13 +398,15 @@ public class MatcherTest {
     }
 
     private <T, R> Match<R> assertMatch(Pattern<R> pattern, T matchedAgainst, R expectedMatch) {
-        Match<R> match = pattern.match(matchedAgainst);
+        Match<R> match = matcher.match(pattern, matchedAgainst);
         assertEquals(expectedMatch, match.value());
         return match;
     }
 
     private <T> void assertNoMatch(Pattern<T> pattern, Object expectedNoMatch) {
-        Match<T> match = pattern.match(expectedNoMatch);
+        Match<T> match = matcher.match(pattern, expectedNoMatch);
         assertEquals(Match.empty(), match);
     }
+
+    private static final Matcher matcher = new DefaultMatcher();
 }
