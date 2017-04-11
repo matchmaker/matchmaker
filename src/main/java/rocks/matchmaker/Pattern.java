@@ -1,10 +1,13 @@
 package rocks.matchmaker;
 
+import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.util.Util;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+
+import static rocks.matchmaker.DefaultMatcher.DEFAULT_MATCHER;
 
 public class Pattern<T> {
 
@@ -14,8 +17,7 @@ public class Pattern<T> {
 
     public static <T> Pattern<T> equalTo(T expectedValue) {
         Util.checkArgument(expectedValue != null, "expectedValue can't be null. Use `Pattern.isNull()` instead");
-        Class<T> expectedClass = (Class<T>) expectedValue.getClass();
-        return typeOf(expectedClass).matching(x -> x.equals(expectedValue));
+        return new EqualsPattern<>(expectedValue);
     }
 
     public static <T> Pattern<T> typeOf(Class<T> expectedClass) {
@@ -49,8 +51,13 @@ public class Pattern<T> {
     private final BiFunction<Object, Captures, Match<T>> matchFunction;
     private final Capture<T> capture;
 
+    //FIXME this is temporary and only for the migration
+    public Pattern() {
+        this(null, null, null);
+    }
+
     //TODO think how to not have this package-private? Make Pattern an interface?
-    Pattern(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
+    protected Pattern(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
         this.scopeType = scopeType;
         this.matchFunction = matchFunction;
         this.capture = capture;
@@ -127,7 +134,11 @@ public class Pattern<T> {
     }
 
     public Match<T> match(Object object, Captures captures) {
-        return matchFunction.apply(object, captures);
+        if (matchFunction == null) {
+            return DEFAULT_MATCHER.match(this, object, captures);
+        } else {
+            return matchFunction.apply(object, captures);
+        }
     }
 
     Class<?> getScopeType() {

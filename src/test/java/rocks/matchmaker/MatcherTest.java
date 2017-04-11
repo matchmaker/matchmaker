@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
+import static rocks.matchmaker.DefaultMatcher.DEFAULT_MATCHER;
 import static rocks.matchmaker.Pattern.any;
 import static rocks.matchmaker.Pattern.equalTo;
 import static rocks.matchmaker.Pattern.isNull;
@@ -398,15 +399,14 @@ public class MatcherTest {
     }
 
     private <T, R> Match<R> assertMatch(Pattern<R> pattern, T matchedAgainst, R expectedMatch) {
-        Match<R> match = matcher.match(pattern, matchedAgainst);
+        Match<R> match = DEFAULT_MATCHER.match(pattern, matchedAgainst);
         assertEquals(expectedMatch, match.value());
         return match;
     }
 
     private <T> void assertNoMatch(Pattern<T> pattern, Object expectedNoMatch) {
-        Match<T> match = matcher.match(pattern, expectedNoMatch);
+        Match<T> match = DEFAULT_MATCHER.match(pattern, expectedNoMatch);
         assertEquals(Match.empty(), match);
     }
 
-    private static final Matcher matcher = new DefaultMatcher();
 }
