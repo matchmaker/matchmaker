@@ -1,6 +1,7 @@
 package rocks.matchmaker;
 
 import rocks.matchmaker.pattern.EqualsPattern;
+import rocks.matchmaker.pattern.TypeOfPattern;
 import rocks.matchmaker.util.Util;
 
 import java.util.Objects;
@@ -21,10 +22,7 @@ public class Pattern<T> {
     }
 
     public static <T> Pattern<T> typeOf(Class<T> expectedClass) {
-        BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
-                .filter(expectedClass::isInstance)
-                .map(expectedClass::cast);
-        return new Pattern<>(expectedClass, matchFunction, null);
+        return new TypeOfPattern<>(expectedClass);
     }
 
     @SuppressWarnings("unchecked cast")
