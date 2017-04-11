@@ -98,9 +98,7 @@ public class Pattern<T> {
      * @return
      */
     public <R> Pattern<R> matching(Extractor<T, R> extractor) {
-        return flatMap((value, captures) -> extractor.apply(value, captures)
-                .map(v -> Match.of(v, captures))
-                .orElse(Match.empty()));
+        return flatMap((value, captures) -> DEFAULT_MATCHER.match(new ExtractPattern<>(extractor), value, captures));
     }
 
     public <R> Pattern<R> matching(Pattern<R> pattern) {
