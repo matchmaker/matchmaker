@@ -6,15 +6,15 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static rocks.matchmaker.Matcher.nullable;
-import static rocks.matchmaker.Matcher.typeOf;
+import static rocks.matchmaker.Pattern.nullable;
+import static rocks.matchmaker.Pattern.typeOf;
 
 public class PatternMatch<T, R> {
 
     private Class<T> matcherResultType;
     private Class<R> caseResultType;
 
-    private List<Matcher<R>> cases = new ArrayList<>();
+    private List<Pattern<R>> cases = new ArrayList<>();
 
     private PatternMatch(Class<T> matcherResultType, Class<R> caseResultType) {
         this.matcherResultType = matcherResultType;
@@ -33,25 +33,25 @@ public class PatternMatch<T, R> {
         return caseOf(typeOf(this.matcherResultType).matching(predicate));
     }
 
-    public Case<T, R> caseOf(Matcher<? extends T> matcher) {
+    public Case<T, R> caseOf(Pattern<? extends T> pattern) {
         return new Case<T, R> (){
 
             @Override
             public PatternMatch<T, R> returns(Function<T, R> result) {
                 //TODO rewrite this so that immutable objects are used
-                //TODO: replace with matcher.map(result)
-                Matcher<R> resultMatcher = matcher.flatMap((match, captures) -> Match.of(result.apply(match), captures));
-                PatternMatch.this.cases.add(resultMatcher);
+                //TODO: replace with pattern.map(result)
+                Pattern<R> resultPattern = pattern.flatMap((match, captures) -> Match.of(result.apply(match), captures));
+                PatternMatch.this.cases.add(resultPattern);
                 return PatternMatch.this;
             }
         };
     }
 
-    public Matcher<R> returnFirst() {
+    public Pattern<R> returnFirst() {
         return nullable(Object.class).flatMap(MultiMatcherMatchFunctions.returnFirst(cases));
     }
 
-    public Matcher<List<R>> returningAll() {
+    public Pattern<List<R>> returningAll() {
         return nullable(Object.class).flatMap(MultiMatcherMatchFunctions.returnAll(cases));
     }
 

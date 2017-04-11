@@ -5,7 +5,7 @@ import java.util.function.Function;
 public class PropertyMatcher<F, R> {
 
     private final Function<F, Option<?>> property;
-    private final Matcher<R> matcher;
+    private final Pattern<R> pattern;
 
     //this reflects the fact that PropertyMatcher<F, R> is contravariant on F and covaraint on R
     @SuppressWarnings("unchecked cast")
@@ -13,21 +13,21 @@ public class PropertyMatcher<F, R> {
         return (PropertyMatcher<F, R>) matcher;
     }
 
-    public static <F, T, R> PropertyMatcher<F, R> of(Function<F, Option<T>> property, Matcher<R> matcher) {
+    public static <F, T, R> PropertyMatcher<F, R> of(Function<F, Option<T>> property, Pattern<R> pattern) {
         //without the ::apply below, the type system is unable to drop the R type from Option
-        return new PropertyMatcher<>(property::apply, matcher);
+        return new PropertyMatcher<>(property::apply, pattern);
     }
 
-    private PropertyMatcher(Function<F, Option<?>> property, Matcher<R> matcher) {
+    private PropertyMatcher(Function<F, Option<?>> property, Pattern<R> pattern) {
         this.property = property;
-        this.matcher = matcher;
+        this.pattern = pattern;
     }
 
     public Function<F, Option<?>> getProperty() {
         return property;
     }
 
-    public Matcher<R> getMatcher() {
-        return matcher;
+    public Pattern<R> getPattern() {
+        return pattern;
     }
 }

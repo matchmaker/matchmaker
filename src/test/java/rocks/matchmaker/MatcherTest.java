@@ -29,11 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
-import static rocks.matchmaker.Matcher.any;
-import static rocks.matchmaker.Matcher.equalTo;
-import static rocks.matchmaker.Matcher.isNull;
-import static rocks.matchmaker.Matcher.nullable;
-import static rocks.matchmaker.Matcher.typeOf;
+import static rocks.matchmaker.Pattern.any;
+import static rocks.matchmaker.Pattern.equalTo;
+import static rocks.matchmaker.Pattern.isNull;
+import static rocks.matchmaker.Pattern.nullable;
+import static rocks.matchmaker.Pattern.typeOf;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
 import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
@@ -53,12 +53,12 @@ public class MatcherTest {
         assertMatch(any(), "John Doe");
 
         //equalTo
-        Matcher<Integer> theAnswer = equalTo(42);
+        Pattern<Integer> theAnswer = equalTo(42);
         assertMatch(theAnswer, 42);
         assertNoMatch(theAnswer, 44);
         assertNoMatch(theAnswer, null); //no exception thrown
         Throwable throwable = assertThrows(IllegalArgumentException.class, () -> equalTo(null));
-        assertTrue(throwable.getMessage().contains("Use `Matcher.isNull()` instead"));
+        assertTrue(throwable.getMessage().contains("Use `Pattern.isNull()` instead"));
 
         //class based
         assertMatch(typeOf(Integer.class), 42);
@@ -78,7 +78,7 @@ public class MatcherTest {
 
     @Test
     void property_matchers() {
-        Matcher<String> aString = typeOf(String.class);
+        Pattern<String> aString = typeOf(String.class);
         Property<String, Integer> length = property(String::length);
         String string = "a";
 
@@ -102,12 +102,12 @@ public class MatcherTest {
 
     @Test
     void match_nested_properties() {
-        Matcher<ProjectNode> matcher = project().with(source().matching(scan()));
+        Pattern<ProjectNode> pattern = project().with(source().matching(scan()));
 
-        assertMatch(matcher, new ProjectNode(new ScanNode("t")));
-        assertNoMatch(matcher, new ScanNode("t"));
-        assertNoMatch(matcher, new ProjectNode(null));
-        assertNoMatch(matcher, new ProjectNode(new ProjectNode(null)));
+        assertMatch(pattern, new ProjectNode(new ScanNode("t")));
+        assertNoMatch(pattern, new ScanNode("t"));
+        assertNoMatch(pattern, new ProjectNode(null));
+        assertNoMatch(pattern, new ProjectNode(new ProjectNode(null)));
     }
 
     @Test
@@ -116,7 +116,7 @@ public class MatcherTest {
 
         String matchedValue = "A little string.";
 
-        Matcher<List<String>> matcher = typeOf(String.class)
+        Pattern<List<String>> pattern = typeOf(String.class)
                 .matching(s -> s.startsWith("A"))
                 .matching((CharSequence s) -> s.length() > 0)
                 .matching(endsWith("string."))
@@ -124,7 +124,7 @@ public class MatcherTest {
                 .matching(hasLowercaseChars.capturedAs(lowercase));
 
         List<String> lowercaseChars = characters("string.").collect(toList());
-        Match<List<String>> match = assertMatch(matcher, matchedValue, lowercaseChars);
+        Match<List<String>> match = assertMatch(pattern, matchedValue, lowercaseChars);
         assertEquals(match.capture(lowercase), lowercaseChars);
     }
 
@@ -132,7 +132,7 @@ public class MatcherTest {
         return (string, captures) -> Option.of(suffix).filter(__ -> string.endsWith(suffix));
     }
 
-    private Matcher<List<String>> hasLowercaseChars = typeOf(String.class).matching((string, captures) -> {
+    private Pattern<List<String>> hasLowercaseChars = typeOf(String.class).matching((string, captures) -> {
         List<String> lowercaseChars = characters(string).filter(this::isLowerCase).collect(toList());
         return Option.of(lowercaseChars).filter(l -> !l.isEmpty());
     });
@@ -148,7 +148,7 @@ public class MatcherTest {
                         .filter(sources -> sources.size() == 1)
                         .map(sources -> sources.get(0)));
 
-        Matcher<PlanNode> planNodeWithExactlyOneSource = plan()
+        Pattern<PlanNode> planNodeWithExactlyOneSource = plan()
                 .with(onlySource.matching(any()));
 
         assertMatch(planNodeWithExactlyOneSource, new ProjectNode(new ScanNode("t")));
@@ -162,14 +162,14 @@ public class MatcherTest {
         Capture<ScanNode> scan = newCapture();
         Capture<String> name = newCapture();
 
-        Matcher<ProjectNode> matcher = project()
+        Pattern<ProjectNode> pattern = project()
                 .with(source().matching(filter().capturedAs(filter)
                         .with(source().matching(scan().capturedAs(scan)
                                 .with(tableName().capturedAs(name))))));
 
         ProjectNode tree = new ProjectNode(new FilterNode(new ScanNode("orders"), null));
 
-        Match<ProjectNode> match = assertMatch(matcher, tree);
+        Match<ProjectNode> match = assertMatch(pattern, tree);
         //notice the concrete type despite no casts:
         FilterNode capturedFilter = match.capture(filter);
         assertEquals(tree.getSource(), capturedFilter);
@@ -179,7 +179,7 @@ public class MatcherTest {
 
     @Test
     void evidence_backed_matching_using_extractors() {
-        Matcher<List<String>> stringWithVowels = typeOf(String.class).matching((x, captures) -> {
+        Pattern<List<String>> stringWithVowels = typeOf(String.class).matching((x, captures) -> {
             List<String> vowels = characters(x).filter(c -> "aeiouy".contains(c.toLowerCase())).collect(toList());
             return Option.of(vowels).filter(l -> !l.isEmpty());
         });
@@ -199,9 +199,9 @@ public class MatcherTest {
     @Test
     void no_match_means_no_captures() {
         Capture<Void> impossible = newCapture();
-        Matcher<Void> matcher = typeOf(Void.class).capturedAs(impossible);
+        Pattern<Void> pattern = typeOf(Void.class).capturedAs(impossible);
 
-        Match<Void> match = matcher.match(42);
+        Match<Void> match = pattern.match(42);
 
         assertTrue(match.isEmpty());
         Throwable throwable = assertThrows(NoSuchElementException.class, () -> match.capture(impossible));
@@ -210,10 +210,10 @@ public class MatcherTest {
 
     @Test
     void unknown_capture_is_an_error() {
-        Matcher<?> matcher = any();
+        Pattern<?> pattern = any();
         Capture<?> unknownCapture = newCapture();
 
-        Match<?> match = matcher.match(42);
+        Match<?> match = pattern.match(42);
 
         Throwable throwable = assertThrows(NoSuchElementException.class, () -> match.capture(unknownCapture));
         assertTrue(() -> throwable.getMessage().contains("unknown Capture"));
@@ -228,12 +228,12 @@ public class MatcherTest {
         Capture<ScanNode> right = newCapture();
         Capture<List<PlanNode>> caputres = newCapture();
 
-        Matcher<List<PlanNode>> accessingTheDesiredCaptures = plan().matching((node, params) ->
+        Pattern<List<PlanNode>> accessingTheDesiredCaptures = plan().matching((node, params) ->
                 Option.of(asList(
                         params.get(left), params.get(right), params.get(root), params.get(parent)
                 )));
 
-        Matcher<JoinNode> matcher = join().capturedAs(root)
+        Pattern<JoinNode> pattern = join().capturedAs(root)
                 .with(probe().matching(join().capturedAs(parent)
                         .with(probe().matching(scan().capturedAs(left)))
                         .with(build().matching(scan().capturedAs(right)))))
@@ -245,7 +245,7 @@ public class MatcherTest {
         JoinNode expectedParent = new JoinNode(expectedLeft, expectedRight);
         JoinNode expectedRoot = new JoinNode(expectedParent, new ScanNode("c"));
 
-        Match<JoinNode> match = assertMatch(matcher, expectedRoot);
+        Match<JoinNode> match = assertMatch(pattern, expectedRoot);
         assertEquals(match.capture(caputres), asList(expectedLeft, expectedRight, expectedRoot, expectedParent));
     }
 
@@ -255,7 +255,7 @@ public class MatcherTest {
         //to achieve type safety in return type of the '.returns(...)' part.
         //We also restrict the type of the matchers used in cases (here: PlanNode)
         //to achieve type safety in input type of the '.returns(...)' part.
-        Matcher<Integer> sourcesNumber = matchFor(PlanNode.class, Integer.class)
+        Pattern<Integer> sourcesNumber = matchFor(PlanNode.class, Integer.class)
                 .caseOf(scan()).returns(() -> 0)
                 .caseOf(filter()).returns(() -> 1)
                 .caseOf(project()).returns(() -> 1)
@@ -272,7 +272,7 @@ public class MatcherTest {
 
     @Test
     void pattern_matching_for_single_result_with_negative_cases() {
-        Matcher<Object> visitor = matchFor(Object.class, Object.class)
+        Pattern<Object> visitor = matchFor(Object.class, Object.class)
                 .caseOf(typeOf(Integer.class)).returns(() -> "integer")
                 .caseOf(typeOf(String.class)).returns(() -> "string")
                 .returnFirst();
@@ -287,7 +287,7 @@ public class MatcherTest {
     void pattern_matching_for_multiple_results() {
         //Restricting the matcher return type (here: String)
         //also allows for easier definition of cases using predicates.
-        Matcher<List<PasswordProperty>> passwordProperties = matchFor(String.class, PasswordProperty.class)
+        Pattern<List<PasswordProperty>> passwordProperties = matchFor(String.class, PasswordProperty.class)
                 .caseOf(s -> s.matches(".*?[A-Z].*")).returns(() -> has_uppercase)
                 .caseOf(s -> s.matches(".*?[a-z].*")).returns(() -> has_lowercase)
                 .caseOf(s -> s.matches(".*?[0-9].*")).returns(() -> has_digits)
@@ -312,7 +312,7 @@ public class MatcherTest {
     void pattern_matching_for_single_result_with_captures() {
         Capture<ScanNode> scanNode = newCapture();
 
-        Matcher<PlanNode> joinMatcher = matchFor(PlanNode.class, PlanNode.class)
+        Pattern<PlanNode> joinPattern = matchFor(PlanNode.class, PlanNode.class)
                 .caseOf(join()
                         .with(probe().matching(scan().capturedAs(scanNode)))
                 )
@@ -324,9 +324,9 @@ public class MatcherTest {
                 .returnFirst();
 
         ScanNode scan = new ScanNode("t");
-        Match<PlanNode> first = assertMatch(joinMatcher, new JoinNode(scan, null));
+        Match<PlanNode> first = assertMatch(joinPattern, new JoinNode(scan, null));
         assertEquals(scan, first.capture(scanNode));
-        Match<PlanNode> second = assertMatch(joinMatcher, new JoinNode(null, scan));
+        Match<PlanNode> second = assertMatch(joinPattern, new JoinNode(null, scan));
         assertEquals(scan, second.capture(scanNode));
     }
 
@@ -353,7 +353,7 @@ public class MatcherTest {
                 Void.class, String.class, Integer.class, Number.class, Double.class, CharSequence.class, String.class);
     }
 
-    private <T> Matcher<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
+    private <T> Pattern<T> registerMatch(Class<T> scopeClass, List<Class<?>> matchAttemtpts) {
         return nullable(scopeClass).matching((x, captures) -> {
             matchAttemtpts.add(scopeClass);
             return Option.of(x);
@@ -361,12 +361,12 @@ public class MatcherTest {
     }
 
     private void assertMatchAttempts(
-            Matcher<?> matcher,
+            Pattern<?> pattern,
             Object matchedObject,
             List<Class<?>> matchAttempts,
             Class<?>... expectedMatchAttempts
     ) {
-        matcher.match(matchedObject);
+        pattern.match(matchedObject);
         assertEquals(asList(expectedMatchAttempts), matchAttempts);
         matchAttempts.clear();
     }
@@ -393,18 +393,18 @@ public class MatcherTest {
         assertMatch(nullable(String.class).matching(x -> x.length() > 0), null));
     }
 
-    private <T> Match<T> assertMatch(Matcher<T> matcher, T expectedMatch) {
-        return assertMatch(matcher, expectedMatch, expectedMatch);
+    private <T> Match<T> assertMatch(Pattern<T> pattern, T expectedMatch) {
+        return assertMatch(pattern, expectedMatch, expectedMatch);
     }
 
-    private <T, R> Match<R> assertMatch(Matcher<R> matcher, T matchedAgainst, R expectedMatch) {
-        Match<R> match = matcher.match(matchedAgainst);
+    private <T, R> Match<R> assertMatch(Pattern<R> pattern, T matchedAgainst, R expectedMatch) {
+        Match<R> match = pattern.match(matchedAgainst);
         assertEquals(expectedMatch, match.value());
         return match;
     }
 
-    private <T> void assertNoMatch(Matcher<T> matcher, Object expectedNoMatch) {
-        Match<T> match = matcher.match(expectedNoMatch);
+    private <T> void assertNoMatch(Pattern<T> pattern, Object expectedNoMatch) {
+        Match<T> match = pattern.match(expectedNoMatch);
         assertEquals(Match.empty(), match);
     }
 }

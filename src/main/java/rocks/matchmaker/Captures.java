@@ -35,7 +35,7 @@ public class Captures {
     @SuppressWarnings("unchecked cast")
     public <T> T get(Capture<T> capture) {
         if (this == NIL) {
-            throw new NoSuchElementException("Requested value for unknown Capture. Was it registered in the Matcher?");
+            throw new NoSuchElementException("Requested value for unknown Capture. Was it registered in the Pattern?");
         } else if (this.capture == capture) {
             return (T) value;
         } else {

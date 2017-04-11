@@ -6,42 +6,42 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-public class Matcher<T> {
+public class Pattern<T> {
 
-    public static Matcher<Object> any() {
+    public static Pattern<Object> any() {
         return typeOf(Object.class);
     }
 
-    public static <T> Matcher<T> equalTo(T expectedValue) {
-        Util.checkArgument(expectedValue != null, "expectedValue can't be null. Use `Matcher.isNull()` instead");
+    public static <T> Pattern<T> equalTo(T expectedValue) {
+        Util.checkArgument(expectedValue != null, "expectedValue can't be null. Use `Pattern.isNull()` instead");
         Class<T> expectedClass = (Class<T>) expectedValue.getClass();
         return typeOf(expectedClass).matching(x -> x.equals(expectedValue));
     }
 
-    public static <T> Matcher<T> typeOf(Class<T> expectedClass) {
+    public static <T> Pattern<T> typeOf(Class<T> expectedClass) {
         BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
                 .filter(expectedClass::isInstance)
                 .map(expectedClass::cast);
-        return new Matcher<>(expectedClass, matchFunction, null);
+        return new Pattern<>(expectedClass, matchFunction, null);
     }
 
     @SuppressWarnings("unchecked cast")
-    public static <T> Matcher<T> isNull() {
-        return (Matcher<T>) nullable(Object.class).matching(Objects::isNull);
+    public static <T> Pattern<T> isNull() {
+        return (Pattern<T>) nullable(Object.class).matching(Objects::isNull);
     }
 
-    public static <T> Matcher<T> nullable(Class<T> expectedClass) {
+    public static <T> Pattern<T> nullable(Class<T> expectedClass) {
         BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
                 .filter(value -> value == null || expectedClass.isInstance(value))
                 .map(expectedClass::cast);
-        return new Matcher<>(expectedClass, matchFunction, null);
+        return new Pattern<>(expectedClass, matchFunction, null);
     }
 
-    //This expresses the fact that Matcher is covariant on T.
-    //This is saying "Matcher<? extends T> is a Matcher<T>".
+    //This expresses the fact that Pattern is covariant on T.
+    //This is saying "Pattern<? extends T> is a Pattern<T>".
     @SuppressWarnings("unchecked cast")
-    public static <T> Matcher<T> upcast(Matcher<? extends T> matcher) {
-        return (Matcher<T>) matcher;
+    public static <T> Pattern<T> upcast(Pattern<? extends T> pattern) {
+        return (Pattern<T>) pattern;
     }
 
     //scopeType unused for now, but will help in debugging and structural equalTo later
@@ -49,14 +49,14 @@ public class Matcher<T> {
     private final BiFunction<Object, Captures, Match<T>> matchFunction;
     private final Capture<T> capture;
 
-    //TODO think how to not have this package-private? Make Matcher an interface?
-    Matcher(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
+    //TODO think how to not have this package-private? Make Pattern an interface?
+    Pattern(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
         this.scopeType = scopeType;
         this.matchFunction = matchFunction;
         this.capture = capture;
     }
 
-    public Matcher<T> capturedAs(Capture<T> capture) {
+    public Pattern<T> capturedAs(Capture<T> capture) {
         if (this.capture != null) {
             throw new IllegalStateException("This matcher already has a capture alias");
         }
@@ -67,7 +67,7 @@ public class Matcher<T> {
         return Match.of(matchedValue, captures.addAll(Captures.ofNullable(capture, matchedValue)));
     }
 
-    public Matcher<T> matching(Predicate<? super T> predicate) {
+    public Pattern<T> matching(Predicate<? super T> predicate) {
         return flatMap((value, captures) -> Match.of(value, captures)
                 .filter(predicate));
     }
@@ -92,33 +92,33 @@ public class Matcher<T> {
      * @param <R>       type of the extracted value
      * @return
      */
-    public <R> Matcher<R> matching(Extractor<T, R> extractor) {
+    public <R> Pattern<R> matching(Extractor<T, R> extractor) {
         return flatMap((value, captures) -> extractor.apply(value, captures)
                 .map(v -> Match.of(v, captures))
                 .orElse(Match.empty()));
     }
 
-    public <R> Matcher<R> matching(Matcher<R> matcher) {
-        return flatMap(matcher.matchFunction);
+    public <R> Pattern<R> matching(Pattern<R> pattern) {
+        return flatMap(pattern.matchFunction);
     }
 
-    public <R> Matcher<T> with(PropertyMatcher<? super T, R> matcher) {
+    public <R> Pattern<T> with(PropertyMatcher<? super T, R> matcher) {
         PropertyMatcher<T, R> castMatcher = PropertyMatcher.upcast(matcher);
         return this.flatMap((selfMatchValue, captures) -> {
             Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);
             Match<R> propertyMatch = propertyOption
-                    .map(value -> castMatcher.getMatcher().match(value, captures))
+                    .map(value -> castMatcher.getPattern().match(value, captures))
                     .orElse(Match.empty());
             return propertyMatch.map(__ -> selfMatchValue);
         });
     }
 
-    protected <R> Matcher<R> flatMap(BiFunction<? super T, Captures, Match<R>> mapper) {
+    protected <R> Pattern<R> flatMap(BiFunction<? super T, Captures, Match<R>> mapper) {
         BiFunction<Object, Captures, Match<R>> newMatchFunction = (object, captures) -> {
             Match<T> originalMatch = matchFunction.apply(object, captures);
             return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));
         };
-        return new Matcher<>(scopeType, newMatchFunction, null);
+        return new Pattern<>(scopeType, newMatchFunction, null);
     }
 
     //Usage of this method within the library's code almost always means an error because of lost captures.

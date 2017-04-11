@@ -1,14 +1,14 @@
 package example.ast;
 
-import rocks.matchmaker.Matcher;
+import rocks.matchmaker.Pattern;
 import rocks.matchmaker.Property;
 
-import static rocks.matchmaker.Matcher.typeOf;
+import static rocks.matchmaker.Pattern.typeOf;
 import static rocks.matchmaker.Property.property;
 
 public class Matchers {
 
-    public static Matcher<JoinNode> join() {
+    public static Pattern<JoinNode> join() {
         return typeOf(JoinNode.class);
     }
 
@@ -20,19 +20,19 @@ public class Matchers {
         return property(JoinNode::getProbe);
     }
 
-    public static Matcher<ScanNode> scan() {
+    public static Pattern<ScanNode> scan() {
         return typeOf(ScanNode.class);
     }
 
-    public static Matcher<FilterNode> filter() {
+    public static Pattern<FilterNode> filter() {
         return typeOf(FilterNode.class);
     }
 
-    public static Matcher<PlanNode> plan() {
+    public static Pattern<PlanNode> plan() {
         return typeOf(PlanNode.class);
     }
 
-    public static Matcher<ProjectNode> project() {
+    public static Pattern<ProjectNode> project() {
         return typeOf(ProjectNode.class);
     }
 
