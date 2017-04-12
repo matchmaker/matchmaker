@@ -248,7 +248,7 @@ public class MatcherTest {
         JoinNode expectedRoot = new JoinNode(expectedParent, new ScanNode("c"));
 
         Match<JoinNode> match = assertMatch(pattern, expectedRoot);
-        assertEquals(match.capture(caputres), asList(expectedLeft, expectedRight, expectedRoot, expectedParent));
+        assertEquals(asList(expectedLeft, expectedRight, expectedRoot, expectedParent), match.capture(caputres));
     }
 
     @Test
