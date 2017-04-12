@@ -1,5 +1,6 @@
 package rocks.matchmaker;
 
+import rocks.matchmaker.pattern.CapturePattern;
 import rocks.matchmaker.pattern.CombinePattern;
 import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.pattern.ExtractPattern;
@@ -51,7 +52,6 @@ public class Pattern<T> {
     //scopeType unused for now, but will help in debugging and structural equalTo later
     private final Class<?> scopeType;
     private final BiFunction<Object, Captures, Match<T>> matchFunction;
-    private final Capture<T> capture;
 
     //FIXME this is temporary and only for the migration
     protected Pattern() {
@@ -61,7 +61,6 @@ public class Pattern<T> {
     protected Pattern(Pattern<?> previous) {
         this.scopeType = null;
         this.matchFunction = null;
-        this.capture = null;
         this.previous = previous;
     }
 
@@ -69,15 +68,11 @@ public class Pattern<T> {
     protected Pattern(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
         this.scopeType = scopeType;
         this.matchFunction = matchFunction;
-        this.capture = capture;
         this.previous = null;
     }
 
     public Pattern<T> capturedAs(Capture<T> capture) {
-        if (this.capture != null) {
-            throw new IllegalStateException("This matcher already has a capture alias");
-        }
-        return flatMap((value, captures) -> createMatch(capture, value, captures));
+        return new CapturePattern<>(capture, this);
     }
 
     protected static <T> Match<T> createMatch(Capture<T> capture, T matchedValue, Captures captures) {

@@ -1,5 +1,6 @@
 package rocks.matchmaker;
 
+import rocks.matchmaker.pattern.CapturePattern;
 import rocks.matchmaker.pattern.CombinePattern;
 import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.pattern.ExtractPattern;
@@ -36,6 +37,8 @@ public class DefaultMatcher implements Matcher {
             return match(combinePattern.pattern(), object, captures);
         } else if (pattern instanceof TypeOfPattern) {
             return Match.of((T) object, captures).filter(o -> ((TypeOfPattern) pattern).expectedClass().isInstance(object));
+        } else if (pattern instanceof CapturePattern) {
+            return Match.of((T) object, captures.addAll(Captures.ofNullable(((CapturePattern<T>) pattern).capture(), (T) object)));
         } else if (pattern instanceof ExtractPattern) {
             ExtractPattern<Object, T> extractPattern = (ExtractPattern<Object, T>) pattern;
             Extractor<Object, T> extractor = extractPattern.extractor();
