@@ -33,7 +33,7 @@ public class Pattern<T> {
 
     @SuppressWarnings("unchecked cast")
     public static <T> Pattern<T> isNull() {
-        return (Pattern<T>) nullable(Object.class).matching(Objects::isNull);
+        return new FilterPattern<>(Objects::isNull, null);
     }
 
     public static <T> Pattern<T> nullable(Class<T> expectedClass) {
