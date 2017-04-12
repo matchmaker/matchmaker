@@ -1,5 +1,6 @@
 package rocks.matchmaker;
 
+import rocks.matchmaker.pattern.CombinePattern;
 import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.pattern.ExtractPattern;
 import rocks.matchmaker.pattern.TypeOfPattern;
@@ -113,7 +114,7 @@ public class Pattern<T> {
     }
 
     public <R> Pattern<R> matching(Pattern<R> pattern) {
-        return flatMap(pattern.matchFunction);
+        return new CombinePattern<>(this, pattern);
     }
 
     public <R> Pattern<T> with(PropertyMatcher<? super T, R> matcher) {
