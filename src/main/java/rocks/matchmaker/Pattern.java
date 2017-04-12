@@ -4,6 +4,7 @@ import rocks.matchmaker.pattern.CapturePattern;
 import rocks.matchmaker.pattern.CombinePattern;
 import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.pattern.ExtractPattern;
+import rocks.matchmaker.pattern.FilterPattern;
 import rocks.matchmaker.pattern.TypeOfPattern;
 import rocks.matchmaker.util.Util;
 
@@ -39,7 +40,7 @@ public class Pattern<T> {
         BiFunction<Object, Captures, Match<T>> matchFunction = (x, captures) -> Match.of(x, captures)
                 .filter(value -> value == null || expectedClass.isInstance(value))
                 .map(expectedClass::cast);
-        return new Pattern<>(expectedClass, matchFunction, null);
+        return new Pattern<>(expectedClass, matchFunction);
     }
 
     //This expresses the fact that Pattern is covariant on T.
@@ -55,17 +56,17 @@ public class Pattern<T> {
 
     //FIXME this is temporary and only for the migration
     protected Pattern() {
-        this(null, null, null);
+        this(null, null);
     }
 
     protected Pattern(Pattern<?> previous) {
-        this.scopeType = null;
+        this.scopeType = Object.class; //FIXME this is temporary to maintain correctness of pattern matching during migraiton
         this.matchFunction = null;
         this.previous = previous;
     }
 
     //TODO think how to not have this package-private? Make Pattern an interface?
-    protected Pattern(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction, Capture<T> capture) {
+    protected Pattern(Class<?> scopeType, BiFunction<Object, Captures, Match<T>> matchFunction) {
         this.scopeType = scopeType;
         this.matchFunction = matchFunction;
         this.previous = null;
@@ -80,8 +81,7 @@ public class Pattern<T> {
     }
 
     public Pattern<T> matching(Predicate<? super T> predicate) {
-        return flatMap((value, captures) -> Match.of(value, captures)
-                .filter(predicate));
+        return new FilterPattern<>(predicate, this);
     }
 
     /**
@@ -128,7 +128,7 @@ public class Pattern<T> {
             Match<T> originalMatch = match(object, captures);
             return originalMatch.flatMap(value -> mapper.apply(value, originalMatch.captures()));
         };
-        return new Pattern<>(scopeType, newMatchFunction, null);
+        return new Pattern<>(scopeType, newMatchFunction);
     }
 
     //Usage of this method within the library's code almost always means an error because of lost captures.

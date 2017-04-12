@@ -6,7 +6,6 @@ import example.ast.JoinNode;
 import example.ast.PlanNode;
 import example.ast.ProjectNode;
 import example.ast.ScanNode;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -31,15 +30,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static rocks.matchmaker.Capture.newCapture;
 import static rocks.matchmaker.DefaultMatcher.DEFAULT_MATCHER;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
+import static rocks.matchmaker.MatcherTest.PasswordProperty.length_at_least_8;
 import static rocks.matchmaker.Pattern.any;
 import static rocks.matchmaker.Pattern.equalTo;
 import static rocks.matchmaker.Pattern.isNull;
 import static rocks.matchmaker.Pattern.nullable;
 import static rocks.matchmaker.Pattern.typeOf;
-import static rocks.matchmaker.MatcherTest.PasswordProperty.has_digits;
-import static rocks.matchmaker.MatcherTest.PasswordProperty.has_lowercase;
-import static rocks.matchmaker.MatcherTest.PasswordProperty.has_uppercase;
-import static rocks.matchmaker.MatcherTest.PasswordProperty.length_at_least_8;
 import static rocks.matchmaker.PatternMatch.matchFor;
 import static rocks.matchmaker.Property.optionalProperty;
 import static rocks.matchmaker.Property.property;
@@ -332,7 +331,6 @@ public class MatcherTest {
         assertEquals(scan, second.capture(scanNode));
     }
 
-    @Disabled("this can't be sensibly tested till reimplemented") //FIXME
     @Test
     void narrows_down_tried_patterns_based_on_scope_type() {
         List<Class<?>> matchAttempts = new ArrayList<>();
