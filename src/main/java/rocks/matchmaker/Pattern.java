@@ -1,6 +1,7 @@
 package rocks.matchmaker;
 
 import rocks.matchmaker.pattern.EqualsPattern;
+import rocks.matchmaker.pattern.ExtractPattern;
 import rocks.matchmaker.pattern.TypeOfPattern;
 import rocks.matchmaker.util.Util;
 
@@ -11,6 +12,8 @@ import java.util.function.Predicate;
 import static rocks.matchmaker.DefaultMatcher.DEFAULT_MATCHER;
 
 public class Pattern<T> {
+
+    private final Pattern<?> previous;
 
     public static Pattern<Object> any() {
         return typeOf(Object.class);
@@ -50,8 +53,15 @@ public class Pattern<T> {
     private final Capture<T> capture;
 
     //FIXME this is temporary and only for the migration
-    public Pattern() {
+    protected Pattern() {
         this(null, null, null);
+    }
+
+    protected Pattern(Pattern<?> previous) {
+        this.scopeType = null;
+        this.matchFunction = null;
+        this.capture = null;
+        this.previous = previous;
     }
 
     //TODO think how to not have this package-private? Make Pattern an interface?
@@ -59,6 +69,7 @@ public class Pattern<T> {
         this.scopeType = scopeType;
         this.matchFunction = matchFunction;
         this.capture = capture;
+        this.previous = null;
     }
 
     public Pattern<T> capturedAs(Capture<T> capture) {
@@ -98,7 +109,7 @@ public class Pattern<T> {
      * @return
      */
     public <R> Pattern<R> matching(Extractor<T, R> extractor) {
-        return flatMap((value, captures) -> DEFAULT_MATCHER.match(new ExtractPattern<>(extractor), value, captures));
+        return new ExtractPattern<>(extractor, this);
     }
 
     public <R> Pattern<R> matching(Pattern<R> pattern) {
@@ -139,5 +150,9 @@ public class Pattern<T> {
 
     Class<?> getScopeType() {
         return scopeType;
+    }
+
+    public Pattern<?> previous() {
+        return previous;
     }
 }
