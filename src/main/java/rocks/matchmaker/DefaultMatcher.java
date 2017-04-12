@@ -33,7 +33,7 @@ public class DefaultMatcher implements Matcher {
             return Match.of((T) object, captures).filter(o -> ((EqualsPattern) pattern).expectedValue().equals(object));
         } else if (pattern instanceof CombinePattern) {
             CombinePattern<T> combinePattern = (CombinePattern<T>) pattern;
-            return doCompute(combinePattern.pattern(), object, captures);
+            return match(combinePattern.pattern(), object, captures);
         } else if (pattern instanceof TypeOfPattern) {
             return Match.of((T) object, captures).filter(o -> ((TypeOfPattern) pattern).expectedClass().isInstance(object));
         } else if (pattern instanceof ExtractPattern) {
