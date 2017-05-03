@@ -15,11 +15,6 @@ public class DefaultMatcher implements Matcher {
     public static final Matcher DEFAULT_MATCHER = new DefaultMatcher();
 
     @Override
-    public <T> Match<T> match(Pattern<T> pattern, Object object) {
-        return match(pattern, object, Captures.empty());
-    }
-
-    @Override
     public <T> Match<T> match(Pattern<T> pattern, Object object, Captures captures) {
         if (pattern.previous() != null) {
             Match<?> match = match(pattern.previous(), object, captures);
