@@ -112,11 +112,11 @@ public class Pattern<T> {
         return new CombinePattern<>(this, pattern);
     }
 
-    public <R> Pattern<T> with(PropertyPattern<? super T, R> pattern) {
-        PropertyPattern<T, R> castMatcher = PropertyPattern.upcast(pattern);
+    public Pattern<T> with(PropertyPattern<? super T, ?> pattern) {
+        PropertyPattern<T, ?> castMatcher = PropertyPattern.upcast(pattern);
         return this.flatMap((selfMatchValue, captures) -> {
             Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);
-            Match<R> propertyMatch = propertyOption
+            Match<?> propertyMatch = propertyOption
                     .map(value -> castMatcher.getPattern().match(value, captures))
                     .orElse(Match.empty());
             return propertyMatch.map(__ -> selfMatchValue);
