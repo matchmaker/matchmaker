@@ -112,8 +112,8 @@ public class Pattern<T> {
         return new CombinePattern<>(this, pattern);
     }
 
-    public <R> Pattern<T> with(PropertyMatcher<? super T, R> matcher) {
-        PropertyMatcher<T, R> castMatcher = PropertyMatcher.upcast(matcher);
+    public <R> Pattern<T> with(PropertyPattern<? super T, R> pattern) {
+        PropertyPattern<T, R> castMatcher = PropertyPattern.upcast(pattern);
         return this.flatMap((selfMatchValue, captures) -> {
             Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);
             Match<R> propertyMatch = propertyOption

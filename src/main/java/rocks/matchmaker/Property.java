@@ -12,8 +12,8 @@ public interface Property<F, T> {
     static <F, T> Property<F, T> optionalProperty(Function<F, Option<T>> property) {
         return new Property<F, T>() {
             @Override
-            public <R> PropertyMatcher<F, R> matching(Pattern<R> pattern) {
-                return PropertyMatcher.of(property, pattern);
+            public <R> PropertyPattern<F, R> matching(Pattern<R> pattern) {
+                return PropertyPattern.of(property, pattern);
             }
         };
     }
@@ -22,23 +22,23 @@ public interface Property<F, T> {
         return property(Function.identity());
     }
 
-    default PropertyMatcher<F, T> capturedAs(Capture<T> capture) {
+    default PropertyPattern<F, T> capturedAs(Capture<T> capture) {
         Pattern<T> matchAll = (Pattern<T>) Pattern.any();
         return matching(matchAll.capturedAs(capture));
     }
 
-    default PropertyMatcher<F, T> equalTo(T value) {
+    default PropertyPattern<F, T> equalTo(T value) {
         return matching(Pattern.equalTo(value));
     }
 
-    default PropertyMatcher<F, T> ofType(Class<? extends T> type) {
+    default PropertyPattern<F, T> ofType(Class<? extends T> type) {
         return matching(Pattern.upcast(Pattern.typeOf(type)));
     }
 
     @SuppressWarnings("unchecked cast")
     //the `matchAll` matcher will only ever be passed the return values matching
     //the `property` function.
-    default PropertyMatcher<F, T> matching(Predicate<? super T> predicate) {
+    default PropertyPattern<F, T> matching(Predicate<? super T> predicate) {
         Pattern<T> matchAll = (Pattern<T>) Pattern.any();
         return matching(matchAll.matching(predicate));
     }
@@ -46,10 +46,10 @@ public interface Property<F, T> {
     @SuppressWarnings("unchecked cast")
     //the `matchAll` matcher will only ever be passed the return values matching
     //the `property` function.
-    default <R> PropertyMatcher<F, R> matching(Extractor<T, R> extractor) {
+    default <R> PropertyPattern<F, R> matching(Extractor<T, R> extractor) {
         Pattern<T> matchAll = (Pattern<T>) Pattern.any();
         return matching(matchAll.matching(extractor));
     }
 
-    <R> PropertyMatcher<F, R> matching(Pattern<R> pattern);
+    <R> PropertyPattern<F, R> matching(Pattern<R> pattern);
 }
