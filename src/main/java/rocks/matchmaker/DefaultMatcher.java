@@ -6,6 +6,9 @@ import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.pattern.ExtractPattern;
 import rocks.matchmaker.pattern.FilterPattern;
 import rocks.matchmaker.pattern.TypeOfPattern;
+import rocks.matchmaker.pattern.WithPattern;
+
+import java.util.function.Function;
 
 public class DefaultMatcher implements Matcher {
 
@@ -36,6 +39,14 @@ public class DefaultMatcher implements Matcher {
         } else if (pattern instanceof CombinePattern) {
             CombinePattern<T> combinePattern = (CombinePattern<T>) pattern;
             return match(combinePattern.pattern(), object, captures);
+        } else if (pattern instanceof WithPattern) {
+            WithPattern<T> withPattern = (WithPattern<T>) pattern;
+            Function<? super T, Option<?>> property = withPattern.getProperty();
+            Option<?> propValue = property.apply((T) object);
+            Match<?> propertyMatch = propValue
+                    .map(value -> match(withPattern.getPattern(), value, captures))
+                    .orElse(Match.empty());
+            return propertyMatch.map(__ -> (T) object);
         } else if (pattern instanceof TypeOfPattern) {
             return Match.of((T) object, captures).filter(o -> ((TypeOfPattern) pattern).expectedClass().isInstance(object));
         } else if (pattern instanceof CapturePattern) {

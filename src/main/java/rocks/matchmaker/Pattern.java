@@ -6,6 +6,7 @@ import rocks.matchmaker.pattern.EqualsPattern;
 import rocks.matchmaker.pattern.ExtractPattern;
 import rocks.matchmaker.pattern.FilterPattern;
 import rocks.matchmaker.pattern.TypeOfPattern;
+import rocks.matchmaker.pattern.WithPattern;
 import rocks.matchmaker.util.Util;
 
 import java.util.Objects;
@@ -113,14 +114,7 @@ public class Pattern<T> {
     }
 
     public Pattern<T> with(PropertyPattern<? super T, ?> pattern) {
-        PropertyPattern<T, ?> castMatcher = PropertyPattern.upcast(pattern);
-        return this.flatMap((selfMatchValue, captures) -> {
-            Option<?> propertyOption = castMatcher.getProperty().apply(selfMatchValue);
-            Match<?> propertyMatch = propertyOption
-                    .map(value -> castMatcher.getPattern().match(value, captures))
-                    .orElse(Match.empty());
-            return propertyMatch.map(__ -> selfMatchValue);
-        });
+        return new WithPattern<>(pattern, this);
     }
 
     protected <R> Pattern<R> flatMap(BiFunction<? super T, Captures, Match<R>> mapper) {
