@@ -55,7 +55,7 @@ public class DefaultMatcher implements Matcher {
                     .map(v -> Match.of(v, captures))
                     .orElse(Match.empty());
         } else {
-            return pattern.match(object, captures);
+            throw new UnsupportedOperationException("Unsupported pattern type: " + pattern.getClass());
         }
     }
 }
