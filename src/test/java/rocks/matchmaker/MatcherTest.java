@@ -7,6 +7,8 @@ import example.ast.ProjectNode;
 import example.ast.ScanNode;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
@@ -59,6 +61,11 @@ public class MatcherTest {
         //predicate-based
         assertMatch(typeOf(Integer.class).matching(x -> x > 0), 42);
         assertNoMatch(typeOf(Integer.class).matching(x -> x > 0), -1);
+    }
+
+    @Test
+    void equalTo_cant_assert_type() {
+        assertMatch(equalTo(new ArrayList<Integer>()), new LinkedList<Integer>());
     }
 
     @Test
