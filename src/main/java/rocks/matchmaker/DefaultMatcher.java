@@ -27,8 +27,12 @@ public class DefaultMatcher implements Matcher {
     @Override
     public <T> Match<T> visit(EqualsPattern<T> equalsPattern, Object object, Captures captures) {
         T expectedValue = equalsPattern.expectedValue();
-        T cast = (T) expectedValue.getClass().cast(object);
-        return expectedValue.equals(object) ? Match.of(cast, captures) : Match.empty();
+        Class<T> expectedValueClass = (Class<T>) expectedValue.getClass();
+        if (expectedValue.equals(object)) {
+            return Match.of(expectedValueClass.cast(object), captures);
+        } else {
+            return Match.empty();
+        }
     }
 
     @Override
@@ -48,7 +52,12 @@ public class DefaultMatcher implements Matcher {
 
     @Override
     public <T> Match<T> visit(TypeOfPattern<T> typeOfPattern, Object object, Captures captures) {
-        return Match.of((T) object, captures).filter(o -> typeOfPattern.expectedClass().isInstance(object));
+        Class<T> expectedClass = typeOfPattern.expectedClass();
+        if (expectedClass.isInstance(object)) {
+            return Match.of(expectedClass.cast(object), captures);
+        } else {
+            return Match.empty();
+        }
     }
 
     @Override
