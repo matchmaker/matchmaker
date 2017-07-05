@@ -11,7 +11,7 @@ import rocks.matchmaker.util.Util;
 
 import java.util.function.Predicate;
 
-public class Pattern<T> {
+abstract public class Pattern<T> {
 
     private final Pattern<?> previous;
 
@@ -87,4 +87,6 @@ public class Pattern<T> {
     public Pattern<?> previous() {
         return previous;
     }
+
+    abstract public Match<T> accept(Matcher matcher, Object object, Captures captures);
 }

@@ -18,44 +18,56 @@ public class DefaultMatcher implements Matcher {
     public <T> Match<T> match(Pattern<T> pattern, Object object, Captures captures) {
         if (pattern.previous() != null) {
             Match<?> match = match(pattern.previous(), object, captures);
-            if (match.isEmpty()) {
-                return (Match<T>) match;
-            } else {
-                return doCompute(pattern, match.value(), match.captures());
-            }
+            return match.flatMap((value) -> pattern.accept(this, value, match.captures()));
         } else {
-            return doCompute(pattern, object, captures);
+            return pattern.accept(this, object, captures);
         }
     }
 
-    public <T> Match<T> doCompute(Pattern<T> pattern, Object object, Captures captures) {
-        if (pattern instanceof EqualsPattern) {
-            return Match.of((T) object, captures).filter(o -> ((EqualsPattern) pattern).expectedValue().equals(object));
-        } else if (pattern instanceof CombinePattern) {
-            CombinePattern<T> combinePattern = (CombinePattern<T>) pattern;
-            return match(combinePattern.pattern(), object, captures);
-        } else if (pattern instanceof WithPattern) {
-            WithPattern<T> withPattern = (WithPattern<T>) pattern;
-            Function<? super T, Option<?>> property = withPattern.getProperty();
-            Option<?> propValue = property.apply((T) object);
-            Match<?> propertyMatch = propValue
-                    .map(value -> match(withPattern.getPattern(), value, captures))
-                    .orElse(Match.empty());
-            return propertyMatch.map(__ -> (T) object);
-        } else if (pattern instanceof TypeOfPattern) {
-            return Match.of((T) object, captures).filter(o -> ((TypeOfPattern) pattern).expectedClass().isInstance(object));
-        } else if (pattern instanceof CapturePattern) {
-            return Match.of((T) object, captures.addAll(Captures.ofNullable(((CapturePattern<T>) pattern).capture(), (T) object)));
-        } else if (pattern instanceof FilterPattern) {
-            return Match.of((T) object, captures).filter(((FilterPattern<T>) pattern).predicate());
-        } else if (pattern instanceof ExtractPattern) {
-            ExtractPattern<Object, T> extractPattern = (ExtractPattern<Object, T>) pattern;
-            Extractor<Object, T> extractor = extractPattern.extractor();
-            return extractor.apply(object, captures)
-                    .map(v -> Match.of(v, captures))
-                    .orElse(Match.empty());
-        } else {
-            throw new UnsupportedOperationException("Unsupported pattern type: " + pattern.getClass());
-        }
+    @Override
+    public <T> Match<T> visit(EqualsPattern<T> equalsPattern, Object object, Captures captures) {
+        T expectedValue = equalsPattern.expectedValue();
+        T cast = (T) expectedValue.getClass().cast(object);
+        return expectedValue.equals(object) ? Match.of(cast, captures) : Match.empty();
     }
+
+    @Override
+    public <T> Match<T> visit(CombinePattern<T> combinePattern, Object object, Captures captures) {
+        return match(combinePattern.pattern(), object, captures);
+    }
+
+    @Override
+    public <T> Match<T> visit(WithPattern<T> withPattern, Object object, Captures captures) {
+        Function<? super T, Option<?>> property = withPattern.getProperty();
+        Option<?> propValue = property.apply((T) object);
+        Match<?> propertyMatch = propValue
+                .map(value -> match(withPattern.getPattern(), value, captures))
+                .orElse(Match.empty());
+        return propertyMatch.map(__ -> (T) object);
+    }
+
+    @Override
+    public <T> Match<T> visit(TypeOfPattern<T> typeOfPattern, Object object, Captures captures) {
+        return Match.of((T) object, captures).filter(o -> typeOfPattern.expectedClass().isInstance(object));
+    }
+
+    @Override
+    public <T> Match<T> visit(CapturePattern<T> capturePattern, Object object, Captures captures) {
+        return Match.of((T) object, captures.addAll(Captures.ofNullable(capturePattern.capture(), (T) object)));
+
+    }
+
+    @Override
+    public <T> Match<T> visit(FilterPattern<T> filterPattern, Object object, Captures captures) {
+        return Match.of((T) object, captures).filter(filterPattern.predicate());
+    }
+
+    @Override
+    public <T, R> Match<R> visit(ExtractPattern<T, R> extractPattern, Object object, Captures captures) {
+        Extractor<T, R> extractor = extractPattern.extractor();
+        return extractor.apply((T) object, captures)
+                .map(v -> Match.of(v, captures))
+                .orElse(Match.empty());
+    }
+
 }

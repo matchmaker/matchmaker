@@ -1,5 +1,8 @@
 package rocks.matchmaker.pattern;
 
+import rocks.matchmaker.Captures;
+import rocks.matchmaker.Match;
+import rocks.matchmaker.Matcher;
 import rocks.matchmaker.Pattern;
 
 public class CombinePattern<T> extends Pattern<T> {
@@ -13,5 +16,10 @@ public class CombinePattern<T> extends Pattern<T> {
 
     public Pattern<T> pattern() {
         return pattern;
+    }
+
+    @Override
+    public Match<T> accept(Matcher matcher, Object object, Captures captures) {
+        return matcher.visit(this, object, captures);
     }
 }

@@ -1,5 +1,8 @@
 package rocks.matchmaker.pattern;
 
+import rocks.matchmaker.Captures;
+import rocks.matchmaker.Match;
+import rocks.matchmaker.Matcher;
 import rocks.matchmaker.Pattern;
 
 public class TypeOfPattern<T> extends Pattern<T> {
@@ -12,5 +15,10 @@ public class TypeOfPattern<T> extends Pattern<T> {
 
     public Class<T> expectedClass() {
         return expectedClass;
+    }
+
+    @Override
+    public Match<T> accept(Matcher matcher, Object object, Captures captures) {
+        return matcher.visit(this, object, captures);
     }
 }
