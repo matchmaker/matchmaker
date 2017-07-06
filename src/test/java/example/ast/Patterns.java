@@ -6,7 +6,7 @@ import rocks.matchmaker.Property;
 import static rocks.matchmaker.Pattern.typeOf;
 import static rocks.matchmaker.Property.property;
 
-public class Matchers {
+public class Patterns {
 
     public static Pattern<JoinNode> join() {
         return typeOf(JoinNode.class);
