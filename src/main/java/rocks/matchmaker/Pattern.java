@@ -91,4 +91,11 @@ abstract public class Pattern<T> {
     abstract public Match<T> accept(Matcher matcher, Object object, Captures captures);
 
     abstract public void accept(PatternVisitor patternVisitor);
+
+    @Override
+    public String toString() {
+        DefaultPrinter printer = new DefaultPrinter();
+        accept(printer);
+        return printer.result();
+    }
 }
