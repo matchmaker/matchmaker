@@ -21,6 +21,6 @@ public class ExtractPattern<T, R> extends Pattern<R> {
 
     @Override
     public Match<R> accept(Matcher matcher, Object object, Captures captures) {
-        return matcher.visit(this, object, captures);
+        return matcher.evaluate(this, object, captures);
     }
 }

@@ -25,7 +25,7 @@ public class DefaultMatcher implements Matcher {
     }
 
     @Override
-    public <T> Match<T> visit(EqualsPattern<T> equalsPattern, Object object, Captures captures) {
+    public <T> Match<T> evaluate(EqualsPattern<T> equalsPattern, Object object, Captures captures) {
         T expectedValue = equalsPattern.expectedValue();
         Class<T> expectedValueClass = (Class<T>) expectedValue.getClass();
         if (expectedValue.equals(object)) {
@@ -36,12 +36,12 @@ public class DefaultMatcher implements Matcher {
     }
 
     @Override
-    public <T> Match<T> visit(CombinePattern<T> combinePattern, Object object, Captures captures) {
+    public <T> Match<T> evaluate(CombinePattern<T> combinePattern, Object object, Captures captures) {
         return match(combinePattern.pattern(), object, captures);
     }
 
     @Override
-    public <T> Match<T> visit(WithPattern<T> withPattern, Object object, Captures captures) {
+    public <T> Match<T> evaluate(WithPattern<T> withPattern, Object object, Captures captures) {
         Function<? super T, Option<?>> property = withPattern.getProperty();
         Option<?> propValue = property.apply((T) object);
         Match<?> propertyMatch = propValue
@@ -51,7 +51,7 @@ public class DefaultMatcher implements Matcher {
     }
 
     @Override
-    public <T> Match<T> visit(TypeOfPattern<T> typeOfPattern, Object object, Captures captures) {
+    public <T> Match<T> evaluate(TypeOfPattern<T> typeOfPattern, Object object, Captures captures) {
         Class<T> expectedClass = typeOfPattern.expectedClass();
         if (expectedClass.isInstance(object)) {
             return Match.of(expectedClass.cast(object), captures);
@@ -61,18 +61,18 @@ public class DefaultMatcher implements Matcher {
     }
 
     @Override
-    public <T> Match<T> visit(CapturePattern<T> capturePattern, Object object, Captures captures) {
+    public <T> Match<T> evaluate(CapturePattern<T> capturePattern, Object object, Captures captures) {
         return Match.of((T) object, captures.addAll(Captures.ofNullable(capturePattern.capture(), (T) object)));
 
     }
 
     @Override
-    public <T> Match<T> visit(FilterPattern<T> filterPattern, Object object, Captures captures) {
+    public <T> Match<T> evaluate(FilterPattern<T> filterPattern, Object object, Captures captures) {
         return Match.of((T) object, captures).filter(filterPattern.predicate());
     }
 
     @Override
-    public <T, R> Match<R> visit(ExtractPattern<T, R> extractPattern, Object object, Captures captures) {
+    public <T, R> Match<R> evaluate(ExtractPattern<T, R> extractPattern, Object object, Captures captures) {
         Extractor<T, R> extractor = extractPattern.extractor();
         return extractor.apply((T) object, captures)
                 .map(v -> Match.of(v, captures))

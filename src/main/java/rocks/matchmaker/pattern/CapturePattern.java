@@ -21,6 +21,6 @@ public class CapturePattern<T> extends Pattern<T> {
 
     @Override
     public Match<T> accept(Matcher matcher, Object object, Captures captures) {
-        return matcher.visit(this, object, captures);
+        return matcher.evaluate(this, object, captures);
     }
 }
