@@ -14,6 +14,8 @@ public class PropertyPattern<F, R> {
     }
 
     public static <F, T, R> PropertyPattern<F, R> of(Function<F, Option<T>> property, Pattern<R> pattern) {
+        //FIXME check state pattern has no previous?
+        //FIXME or maybe 'DereferenceProperty' is the previous pattern?
         //without the ::apply below, the type system is unable to drop the R type from Option
         return new PropertyPattern<>(property::apply, pattern);
     }
