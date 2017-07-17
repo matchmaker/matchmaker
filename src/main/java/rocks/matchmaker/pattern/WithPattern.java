@@ -5,6 +5,7 @@ import rocks.matchmaker.Match;
 import rocks.matchmaker.Matcher;
 import rocks.matchmaker.Option;
 import rocks.matchmaker.Pattern;
+import rocks.matchmaker.PatternVisitor;
 import rocks.matchmaker.PropertyPattern;
 
 import java.util.function.Function;
@@ -29,5 +30,10 @@ public class WithPattern<T> extends Pattern<T> {
     @Override
     public Match<T> accept(Matcher matcher, Object object, Captures captures) {
         return matcher.evaluate(this, object, captures);
+    }
+
+    @Override
+    public void accept(PatternVisitor patternVisitor) {
+        patternVisitor.visit(this);
     }
 }

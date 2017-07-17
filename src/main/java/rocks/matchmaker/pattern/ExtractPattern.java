@@ -5,6 +5,7 @@ import rocks.matchmaker.Extractor;
 import rocks.matchmaker.Match;
 import rocks.matchmaker.Matcher;
 import rocks.matchmaker.Pattern;
+import rocks.matchmaker.PatternVisitor;
 
 public class ExtractPattern<T, R> extends Pattern<R> {
 
@@ -22,5 +23,10 @@ public class ExtractPattern<T, R> extends Pattern<R> {
     @Override
     public Match<R> accept(Matcher matcher, Object object, Captures captures) {
         return matcher.evaluate(this, object, captures);
+    }
+
+    @Override
+    public void accept(PatternVisitor patternVisitor) {
+        patternVisitor.visit(this);
     }
 }

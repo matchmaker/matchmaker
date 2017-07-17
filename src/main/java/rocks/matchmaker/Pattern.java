@@ -89,4 +89,6 @@ abstract public class Pattern<T> {
     }
 
     abstract public Match<T> accept(Matcher matcher, Object object, Captures captures);
+
+    abstract public void accept(PatternVisitor patternVisitor);
 }
