@@ -64,11 +64,6 @@ public class DefaultPrinter implements PatternVisitor<String> {
         level -= 1;
     }
 
-    @Override
-    public void visitPattern(Pattern<?> pattern) {
-        appendLine(pattern.toString());
-    }
-
     private void appendLine(String template, Object... arguments) {
         result.append(Util.indent(level, template + "\n", arguments));
     }
