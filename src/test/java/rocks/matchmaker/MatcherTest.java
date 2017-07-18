@@ -238,6 +238,8 @@ public class MatcherTest {
                 .with(build().matching(scan()
                         .matching(accessingTheDesiredCaptures.capturedAs(caputres))));
 
+        System.out.println(pattern);
+
         ScanNode expectedLeft = new ScanNode("a");
         ScanNode expectedRight = new ScanNode("b");
         JoinNode expectedParent = new JoinNode(expectedLeft, expectedRight);

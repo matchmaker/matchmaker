@@ -26,7 +26,7 @@ public class ExtractPattern<T, R> extends Pattern<R> {
     }
 
     @Override
-    public void accept(PatternVisitor patternVisitor) {
+    public <R> void accept(PatternVisitor<R> patternVisitor) {
         patternVisitor.visit(this);
     }
 }

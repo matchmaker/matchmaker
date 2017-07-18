@@ -26,7 +26,7 @@ public class CapturePattern<T> extends Pattern<T> {
     }
 
     @Override
-    public void accept(PatternVisitor patternVisitor) {
+    public <R> void accept(PatternVisitor<R> patternVisitor) {
         patternVisitor.visit(this);
     }
 }
