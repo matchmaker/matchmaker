@@ -26,10 +26,6 @@ public interface PatternVisitor<R> {
 
     void visit(WithPattern<?> pattern);
 
-    default void visitPattern(Pattern<?> pattern) {
-        throw new UnsupportedOperationException("Unsupported pattern type: " + pattern.getClass().getCanonicalName());
-    }
-
     default void visitPrevious(Pattern pattern) {
         Pattern previous = pattern.previous();
         if (previous != null) {
