@@ -35,7 +35,6 @@ abstract public class Pattern<T> {
         return (Pattern<T>) pattern;
     }
 
-    //FIXME this is temporary and only for the migration
     protected Pattern() {
         this(null);
     }
